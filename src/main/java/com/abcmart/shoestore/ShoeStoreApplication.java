@@ -1,4 +1,4 @@
-package com.abcmart.shoe_store;
+package com.abcmart.shoestore;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

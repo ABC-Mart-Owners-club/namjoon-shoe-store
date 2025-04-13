@@ -1,4 +1,4 @@
-package com.abcmart.shoe_store;
+package com.abcmart.shoestore;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
