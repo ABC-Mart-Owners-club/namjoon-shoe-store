@@ -17,8 +17,8 @@ public class OrderPayment {
         this.amount = amount;
     }
 
-    public OrderPayment create(PaymentType type, BigDecimal amount) {
+    public static OrderPayment payInCash(BigDecimal amount) {
 
-        return new OrderPayment(type, amount);
+        return new OrderPayment(PaymentType.CASH, amount);
     }
 }
