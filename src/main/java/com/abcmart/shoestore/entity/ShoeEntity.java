@@ -7,6 +7,8 @@ import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Getter
 @Entity
 @NoArgsConstructor
@@ -22,9 +24,9 @@ public class ShoeEntity {
 
     private int size;
 
-    private Long price;
+    private BigDecimal price;
 
-    private ShoeEntity(String shoeName, String color, int size, Long price) {
+    private ShoeEntity(String shoeName, String color, int size, BigDecimal price) {
 
         this.shoeName = shoeName;
         this.color = color;
@@ -32,7 +34,7 @@ public class ShoeEntity {
         this.price = price;
     }
 
-    public ShoeEntity create(String shoeName, String color, int size, Long price) {
+    public ShoeEntity create(String shoeName, String color, int size, BigDecimal price) {
 
         return new ShoeEntity(shoeName, color, size, price);
     }
