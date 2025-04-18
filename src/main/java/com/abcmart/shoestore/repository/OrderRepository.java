@@ -7,4 +7,6 @@ import org.springframework.stereotype.Repository;
 public interface OrderRepository {
 
     OrderEntity save(OrderEntity orderEntity);
+
+    OrderEntity findByOrderNo(Long orderNo);
 }

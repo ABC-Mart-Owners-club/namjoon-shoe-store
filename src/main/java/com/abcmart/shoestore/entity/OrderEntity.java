@@ -45,12 +45,11 @@ public class OrderEntity {
         return orderEntity;
     }
 
-    public OrderEntity totalCancel() {
+    public void totalCancel() {
 
         validateAvailableCancel();
 
         this.status = OrderStatus.CANCEL;
-        return this;
     }
 
     public OrderEntity partialCancel(Long shoeCode, Long removeCount) {

@@ -10,6 +10,7 @@ import com.abcmart.shoestore.repository.OrderRepository;
 import com.abcmart.shoestore.repository.ShoeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -25,6 +26,7 @@ public class OrderService {
     private final ShoeRepository shoeRepository;
     private final OrderRepository orderRepository;
 
+    @Transactional
     public Order createOrder(CreateOrderRequest request) {
 
         List<Long> shoeCodes = request.getOrderDetails().stream().map(CreateOrderRequest.CreateOrderDetailRequest::getShoeCode).toList();
@@ -59,5 +61,14 @@ public class OrderService {
         }
 
         return total;
+    }
+
+    @Transactional
+    public Order cancelOrder(Long orderNo) {
+
+        OrderEntity targetOrderEntity = orderRepository.findByOrderNo(orderNo);
+        targetOrderEntity.totalCancel();
+        OrderEntity savedEntity = orderRepository.save(targetOrderEntity);
+        return Order.from(savedEntity);
     }
 }
