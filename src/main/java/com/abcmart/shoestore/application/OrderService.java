@@ -1,8 +1,10 @@
 package com.abcmart.shoestore.application;
 
 import com.abcmart.shoestore.application.request.CreateOrderRequest;
+import com.abcmart.shoestore.application.response.ShoeSaleCountResponse;
 import com.abcmart.shoestore.domain.OrderPayment;
 import com.abcmart.shoestore.dto.Order;
+import com.abcmart.shoestore.dto.Shoe;
 import com.abcmart.shoestore.entity.OrderDetailEntity;
 import com.abcmart.shoestore.entity.OrderEntity;
 import com.abcmart.shoestore.entity.ShoeEntity;
@@ -83,5 +85,32 @@ public class OrderService {
         OrderEntity savedEntity = orderRepository.save(orderEntity);
 
         return Order.from(savedEntity);
+    }
+
+    @Transactional
+    public ShoeSaleCountResponse getShoeSaleCount() {
+
+        List<OrderDetailEntity> orderDetailEntityList = orderRepository.findAllNormalStatusOrderDetails();
+
+        List<Long> soldShoeCodes = orderDetailEntityList.stream().map(OrderDetailEntity::getShoeCode).toList();
+        Map<Long, ShoeEntity> soldShoeEntityMap = shoeRepository.findAllByShoeCodes(soldShoeCodes).stream()
+                .collect(Collectors.toMap(ShoeEntity::getShoeCode, Function.identity()));
+
+        List<ShoeSaleCountResponse.SoldShoe> soldShoeList = orderDetailEntityList.stream()
+            .map(detailEntity -> {
+                ShoeEntity shoeEntity = soldShoeEntityMap.get(detailEntity.getShoeCode());
+                if (Objects.isNull(shoeEntity)) {
+                    return null;
+                }
+
+                Shoe shoe = Shoe.from(shoeEntity);
+                Long saleCount = detailEntity.getCount();
+
+                return ShoeSaleCountResponse.SoldShoe.of(shoe, saleCount);
+            })
+            .filter(Objects::nonNull)
+            .toList();
+
+        return ShoeSaleCountResponse.from(soldShoeList);
     }
 }
