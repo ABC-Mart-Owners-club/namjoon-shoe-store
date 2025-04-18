@@ -9,16 +9,27 @@ import java.math.BigDecimal;
 public class OrderPayment {
 
     private final PaymentType type;
-    private final BigDecimal amount;
+    private final BigDecimal totalAmount;
+    private BigDecimal paidAmount;
+    private BigDecimal cancelledAmount;
 
-    private OrderPayment(PaymentType type, BigDecimal amount) {
+    private OrderPayment(PaymentType type, BigDecimal totalAmount) {
 
         this.type = type;
-        this.amount = amount;
+        this.totalAmount = totalAmount;
+        this.paidAmount = totalAmount;
+        this.cancelledAmount = BigDecimal.ZERO;
     }
 
     public static OrderPayment payInCash(BigDecimal amount) {
 
         return new OrderPayment(PaymentType.CASH, amount);
+    }
+
+    public OrderPayment partialCancel(BigDecimal cancelledAmount) {
+
+        this.cancelledAmount = cancelledAmount;
+        this.paidAmount = this.totalAmount.subtract(cancelledAmount);
+        return this;
     }
 }

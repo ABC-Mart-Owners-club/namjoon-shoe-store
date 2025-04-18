@@ -69,6 +69,19 @@ public class OrderService {
         OrderEntity targetOrderEntity = orderRepository.findByOrderNo(orderNo);
         targetOrderEntity.totalCancel();
         OrderEntity savedEntity = orderRepository.save(targetOrderEntity);
+
+        return Order.from(savedEntity);
+    }
+
+    @Transactional
+    public Order partialCancel(Long orderNo, Long shoeCode, Long removeCount) {
+
+        ShoeEntity shoeEntity = shoeRepository.findByShoeCode(shoeCode);
+
+        OrderEntity orderEntity = orderRepository.findByOrderNo(orderNo);
+        orderEntity.partialCancel(shoeEntity, removeCount);
+        OrderEntity savedEntity = orderRepository.save(orderEntity);
+
         return Order.from(savedEntity);
     }
 }

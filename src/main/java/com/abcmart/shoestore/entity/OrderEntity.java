@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -52,14 +53,14 @@ public class OrderEntity {
         this.status = OrderStatus.CANCEL;
     }
 
-    public OrderEntity partialCancel(Long shoeCode, Long removeCount) {
+    public OrderEntity partialCancel(ShoeEntity shoeEntity, Long removeCount) {
 
         validateAvailableCancel();
 
         Map<Long, OrderDetailEntity> detailEntityMap = this.details.stream()
                 .collect(Collectors.toMap(OrderDetailEntity::getShoeCode, Function.identity()));
 
-        OrderDetailEntity orderDetailEntity = detailEntityMap.get(shoeCode);
+        OrderDetailEntity orderDetailEntity = detailEntityMap.get(shoeEntity.getShoeCode());
         if (Objects.isNull(orderDetailEntity)) {
             throw new IllegalArgumentException("ShoeCode not found in order details");
         }
@@ -68,6 +69,9 @@ public class OrderEntity {
         if (validateAllCancelled()) {
             this.status = OrderStatus.CANCEL;
         }
+
+        BigDecimal cancelledAmount = shoeEntity.getPrice().multiply(BigDecimal.valueOf(removeCount));
+        orderPayment.partialCancel(cancelledAmount);
 
         return this;
     }
