@@ -1,2 +1,2 @@
 # namjoon-shoe-store
-수내 그라테아점
+분당 수내 그라테아 지점
