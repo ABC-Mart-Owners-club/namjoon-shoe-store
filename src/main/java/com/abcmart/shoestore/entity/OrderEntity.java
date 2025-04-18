@@ -38,10 +38,11 @@ public class OrderEntity {
         this.orderPayment = orderPayment;
     }
 
-    public OrderEntity create(List<OrderDetailEntity> detailEntities, OrderPayment orderPayment) {
+    public static OrderEntity create(List<OrderDetailEntity> detailEntities, OrderPayment orderPayment) {
 
-        detailEntities.forEach(orderDetailEntity -> orderDetailEntity.link(this));
-        return new OrderEntity(detailEntities, orderPayment);
+        OrderEntity orderEntity = new OrderEntity(detailEntities, orderPayment);
+        orderEntity.getDetails().forEach(orderDetailEntity -> orderDetailEntity.link(orderEntity));
+        return orderEntity;
     }
 
     public OrderEntity totalCancel() {

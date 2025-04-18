@@ -31,7 +31,7 @@ public class OrderDetailEntity {
         this.count = count;
     }
 
-    public OrderDetailEntity create(Long shoeCode, Long count) {
+    public static OrderDetailEntity create(Long shoeCode, Long count) {
 
         return new OrderDetailEntity(shoeCode, count);
     }
