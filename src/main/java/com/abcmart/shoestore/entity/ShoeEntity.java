@@ -34,7 +34,7 @@ public class ShoeEntity {
         this.price = price;
     }
 
-    public ShoeEntity create(String shoeName, String color, int size, BigDecimal price) {
+    public static ShoeEntity create(String shoeName, String color, int size, BigDecimal price) {
 
         return new ShoeEntity(shoeName, color, size, price);
     }
