@@ -1,16 +1,26 @@
 package com.abcmart.shoestore.domain;
 
 import com.abcmart.shoestore.tool.PaymentType;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 
 import java.math.BigDecimal;
+import lombok.NoArgsConstructor;
 
 @Getter
+@NoArgsConstructor
 public class OrderPayment {
 
-    private final PaymentType type;
-    private final BigDecimal totalAmount;
+    @NotNull
+    private PaymentType type;
+
+    @NotNull
+    private BigDecimal totalAmount;
+
+    @NotNull
     private BigDecimal paidAmount;
+
+    @NotNull
     private BigDecimal cancelledAmount;
 
     private OrderPayment(PaymentType type, BigDecimal totalAmount) {

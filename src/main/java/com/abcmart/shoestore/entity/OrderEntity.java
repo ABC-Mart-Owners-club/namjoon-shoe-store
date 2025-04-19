@@ -3,6 +3,7 @@ package com.abcmart.shoestore.entity;
 import com.abcmart.shoestore.domain.OrderPayment;
 import com.abcmart.shoestore.tool.OrderStatus;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -30,6 +31,7 @@ public class OrderEntity {
 
     @Lob
     @Embedded
+    @NotNull
     private OrderPayment orderPayment;
 
     private OrderEntity(List<OrderDetailEntity> details, OrderPayment orderPayment) {
