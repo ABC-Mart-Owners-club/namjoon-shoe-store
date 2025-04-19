@@ -2,6 +2,7 @@ package com.abcmart.shoestore.application;
 
 import com.abcmart.shoestore.application.request.CreateOrderRequest;
 import com.abcmart.shoestore.application.response.ShoeSaleCountResponse;
+import com.abcmart.shoestore.application.response.ShoeSaleCountResponse.SoldShoe;
 import com.abcmart.shoestore.domain.OrderPayment;
 import com.abcmart.shoestore.dto.Order;
 import com.abcmart.shoestore.dto.Shoe;
@@ -10,16 +11,16 @@ import com.abcmart.shoestore.entity.OrderEntity;
 import com.abcmart.shoestore.entity.ShoeEntity;
 import com.abcmart.shoestore.repository.OrderRepository;
 import com.abcmart.shoestore.repository.ShoeRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -102,21 +103,25 @@ public class OrderService {
             .stream()
             .collect(Collectors.toMap(ShoeEntity::getShoeCode, Function.identity()));
 
-        List<ShoeSaleCountResponse.SoldShoe> soldShoeList = orderDetailEntityList.stream()
-            .map(detailEntity -> {
-                ShoeEntity shoeEntity = soldShoeEntityMap.get(detailEntity.getShoeCode());
-                if (Objects.isNull(shoeEntity)) {
-                    return null;
-                }
+        HashMap<Long, SoldShoe> soldShoeHashMap = new HashMap<>();
+        orderDetailEntityList.forEach(detailEntity -> {
+            ShoeEntity shoeEntity = soldShoeEntityMap.get(detailEntity.getShoeCode());
+            if (Objects.isNull(shoeEntity)) {
+                return;
+            }
 
-                Shoe shoe = Shoe.from(shoeEntity);
-                Long saleCount = detailEntity.getCount();
+            Shoe shoe = Shoe.from(shoeEntity);
+            Long saleCount = detailEntity.getCount();
 
-                return ShoeSaleCountResponse.SoldShoe.of(shoe, saleCount);
-            })
-            .filter(Objects::nonNull)
-            .toList();
+            if (soldShoeHashMap.containsKey(shoe.getShoeCode())) {
+                SoldShoe soldShoe = soldShoeHashMap.get(shoe.getShoeCode());
+                soldShoe.updateSaleCountAndTotalPrice(saleCount);
+                return;
+            }
 
-        return ShoeSaleCountResponse.from(soldShoeList);
+            soldShoeHashMap.put(shoe.getShoeCode(), SoldShoe.of(shoe, saleCount));
+        });
+
+        return ShoeSaleCountResponse.from(soldShoeHashMap.values().stream().toList());
     }
 }

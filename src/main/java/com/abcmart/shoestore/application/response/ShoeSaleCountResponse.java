@@ -42,7 +42,7 @@ public class ShoeSaleCountResponse {
             this.size = size;
             this.price = price;
             this.saleCount = saleCount;
-            this.totalPrice = price.multiply(BigDecimal.valueOf(size));
+            this.totalPrice = price.multiply(BigDecimal.valueOf(saleCount));
         }
 
         public static SoldShoe of(Shoe shoe, Long saleCount) {
@@ -55,6 +55,13 @@ public class ShoeSaleCountResponse {
                 shoe.getPrice(),
                 saleCount
             );
+        }
+
+        public SoldShoe updateSaleCountAndTotalPrice(Long saleCount) {
+
+            this.saleCount += saleCount;
+            this.totalPrice = this.totalPrice.add(this.price.multiply(BigDecimal.valueOf(saleCount)));
+            return this;
         }
     }
 }

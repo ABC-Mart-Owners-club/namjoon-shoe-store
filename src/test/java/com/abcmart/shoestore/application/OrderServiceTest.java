@@ -8,6 +8,8 @@ import static org.mockito.BDDMockito.given;
 
 import com.abcmart.shoestore.application.request.CreateOrderRequest;
 import com.abcmart.shoestore.application.request.CreateOrderRequest.CreateOrderDetailRequest;
+import com.abcmart.shoestore.application.response.ShoeSaleCountResponse;
+import com.abcmart.shoestore.application.response.ShoeSaleCountResponse.SoldShoe;
 import com.abcmart.shoestore.dto.Order;
 import com.abcmart.shoestore.dto.OrderDetail;
 import com.abcmart.shoestore.entity.OrderDetailEntity;
@@ -19,6 +21,7 @@ import com.abcmart.shoestore.tool.OrderStatus;
 import com.abcmart.shoestore.tool.PaymentType;
 import com.navercorp.fixturemonkey.FixtureMonkey;
 import com.navercorp.fixturemonkey.api.introspector.FieldReflectionArbitraryIntrospector;
+import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -231,6 +234,81 @@ class OrderServiceTest {
     }
 
     @Test
+    @DisplayName("신발 상품 별 판매 수량이 정상적으로 조회되는지 확인한다.")
     void getShoeSaleCount() {
+
+        // given
+        Long shoeCode1 = 1L;
+        Long shoeCode2 = 2L;
+        Long shoeCode3 = 3L;
+
+        ShoeEntity shoeEntity1 = fixtureMonkey.giveMeBuilder(ShoeEntity.class)
+            .set("shoeCode", shoeCode1)
+            .set("price", BigDecimal.valueOf(50_000))
+            .sample();
+        ShoeEntity shoeEntity2 = fixtureMonkey.giveMeBuilder(ShoeEntity.class)
+            .set("shoeCode", shoeCode2)
+            .set("price", BigDecimal.valueOf(100_000))
+            .sample();
+        ShoeEntity shoeEntity3 = fixtureMonkey.giveMeBuilder(ShoeEntity.class)
+            .set("shoeCode", shoeCode3)
+            .set("price", BigDecimal.valueOf(70_000))
+            .sample();
+        List<ShoeEntity> shoeEntities = List.of(shoeEntity1, shoeEntity2, shoeEntity3);
+
+        given(shoeRepository.findAllByShoeCodes(anyList())).willReturn(shoeEntities);
+
+        long shoe1SaleCount = 2L;
+        OrderDetailEntity orderDetailEntity1 = fixtureMonkey.giveMeBuilder(OrderDetailEntity.class)
+            .set("orderStatus", OrderStatus.NORMAL)
+            .set("shoeCode", shoeCode1)
+            .set("count", shoe1SaleCount)
+            .sample();
+        long shoe2SaleCount = 3L;
+        OrderDetailEntity orderDetailEntity2 = fixtureMonkey.giveMeBuilder(OrderDetailEntity.class)
+            .set("orderStatus", OrderStatus.NORMAL)
+            .set("shoeCode", shoeCode2)
+            .set("count", shoe2SaleCount)
+            .sample();
+        long shoe3SaleCount = 5L;
+        OrderDetailEntity orderDetailEntity3 = fixtureMonkey.giveMeBuilder(OrderDetailEntity.class)
+            .set("orderStatus", OrderStatus.NORMAL)
+            .set("shoeCode", shoeCode3)
+            .set("count", shoe3SaleCount)
+            .sample();
+        List<OrderDetailEntity> orderDetailEntityList = List.of(
+            orderDetailEntity1, orderDetailEntity2, orderDetailEntity3
+        );
+
+        given(orderRepository.findAllNormalStatusOrderDetails()).willReturn(orderDetailEntityList);
+
+
+        // when
+        ShoeSaleCountResponse shoeSaleCountResponse = orderService.getShoeSaleCount();
+
+
+        // then
+        assertThat(shoeSaleCountResponse.getTotalElements()).isEqualTo(shoeEntities.size());
+
+        SoldShoe soldShoe1 = shoeSaleCountResponse.getSoldShoes().stream()
+            .filter(soldShoe -> soldShoe.getShoeCode().equals(shoeCode1)).findFirst().get();
+        assertThat(
+            soldShoe1.getSaleCount().equals(orderDetailEntity1.getCount())
+            && soldShoe1.getTotalPrice().equals(shoeEntity1.getPrice().multiply(BigDecimal.valueOf(shoe1SaleCount)))
+        ).isTrue();
+
+        SoldShoe soldShoe2 = shoeSaleCountResponse.getSoldShoes().stream()
+            .filter(soldShoe -> soldShoe.getShoeCode().equals(shoeCode2)).findFirst().get();
+        assertThat(
+            soldShoe2.getSaleCount().equals(orderDetailEntity2.getCount())
+                && soldShoe2.getTotalPrice().equals(shoeEntity2.getPrice().multiply(BigDecimal.valueOf(shoe2SaleCount)))
+        ).isTrue();
+
+        SoldShoe soldShoe3 = shoeSaleCountResponse.getSoldShoes().stream()
+            .filter(soldShoe -> soldShoe.getShoeCode().equals(shoeCode3)).findFirst().get();
+        assertThat(
+            soldShoe3.getSaleCount().equals(orderDetailEntity3.getCount())
+                && soldShoe3.getTotalPrice().equals(shoeEntity3.getPrice().multiply(BigDecimal.valueOf(shoe3SaleCount)))
+        ).isTrue();
     }
 }
