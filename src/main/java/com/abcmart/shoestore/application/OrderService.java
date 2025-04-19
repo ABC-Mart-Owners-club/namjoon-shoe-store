@@ -31,14 +31,16 @@ public class OrderService {
     @Transactional
     public Order createOrder(CreateOrderRequest request) {
 
-        List<Long> shoeCodes = request.getOrderDetails().stream().map(CreateOrderRequest.CreateOrderDetailRequest::getShoeCode).toList();
+        List<Long> shoeCodes = request.getOrderDetails().stream()
+            .map(CreateOrderRequest.CreateOrderDetailRequest::getShoeCode).toList();
 
         Map<Long, ShoeEntity> shoeEntityMap = shoeRepository.findAllByShoeCodes(shoeCodes).stream()
             .collect(Collectors.toMap(ShoeEntity::getShoeCode, Function.identity()));
 
         List<OrderDetailEntity> detailEntities = request.getOrderDetails().stream()
-                .map(orderDetail -> OrderDetailEntity.create(orderDetail.getShoeCode(), orderDetail.getCount()))
-                .toList();
+            .map(orderDetail -> OrderDetailEntity.create(orderDetail.getShoeCode(),
+                orderDetail.getCount()))
+            .toList();
         BigDecimal totalPrice = calculateTotalPrice(shoeEntityMap, request.getOrderDetails());
         OrderPayment orderPayment = OrderPayment.payInCash(totalPrice);
         OrderEntity orderEntity = OrderEntity.create(detailEntities, orderPayment);
@@ -47,7 +49,8 @@ public class OrderService {
         return Order.from(savedEntity);
     }
 
-    private BigDecimal calculateTotalPrice(Map<Long, ShoeEntity> shoeEntityMap, List<CreateOrderRequest.CreateOrderDetailRequest> orderDetails) {
+    private BigDecimal calculateTotalPrice(Map<Long, ShoeEntity> shoeEntityMap,
+        List<CreateOrderRequest.CreateOrderDetailRequest> orderDetails) {
 
         BigDecimal total = BigDecimal.ZERO;
         for (CreateOrderRequest.CreateOrderDetailRequest orderDetail : orderDetails) {
@@ -58,7 +61,8 @@ public class OrderService {
                 continue;
             }
 
-            BigDecimal shoesPrice = shoeEntity.getPrice().multiply(BigDecimal.valueOf(orderDetail.getCount()));
+            BigDecimal shoesPrice = shoeEntity.getPrice()
+                .multiply(BigDecimal.valueOf(orderDetail.getCount()));
             total = total.add(shoesPrice);
         }
 
@@ -92,9 +96,11 @@ public class OrderService {
 
         List<OrderDetailEntity> orderDetailEntityList = orderRepository.findAllNormalStatusOrderDetails();
 
-        List<Long> soldShoeCodes = orderDetailEntityList.stream().map(OrderDetailEntity::getShoeCode).toList();
-        Map<Long, ShoeEntity> soldShoeEntityMap = shoeRepository.findAllByShoeCodes(soldShoeCodes).stream()
-                .collect(Collectors.toMap(ShoeEntity::getShoeCode, Function.identity()));
+        List<Long> soldShoeCodes = orderDetailEntityList.stream()
+            .map(OrderDetailEntity::getShoeCode).toList();
+        Map<Long, ShoeEntity> soldShoeEntityMap = shoeRepository.findAllByShoeCodes(soldShoeCodes)
+            .stream()
+            .collect(Collectors.toMap(ShoeEntity::getShoeCode, Function.identity()));
 
         List<ShoeSaleCountResponse.SoldShoe> soldShoeList = orderDetailEntityList.stream()
             .map(detailEntity -> {
