@@ -59,7 +59,7 @@ public class OrderService {
             }
 
             BigDecimal shoesPrice = shoeEntity.getPrice().multiply(BigDecimal.valueOf(orderDetail.getCount()));
-            total.add(shoesPrice);
+            total = total.add(shoesPrice);
         }
 
         return total;
