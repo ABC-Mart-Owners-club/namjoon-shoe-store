@@ -3,13 +3,14 @@ package com.abcmart.shoestore.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 
 import com.abcmart.shoestore.application.request.CreateOrderRequest;
 import com.abcmart.shoestore.application.request.CreateOrderRequest.CreateOrderDetailRequest;
-import com.abcmart.shoestore.domain.OrderPayment;
 import com.abcmart.shoestore.dto.Order;
 import com.abcmart.shoestore.dto.OrderDetail;
+import com.abcmart.shoestore.entity.OrderDetailEntity;
 import com.abcmart.shoestore.entity.OrderEntity;
 import com.abcmart.shoestore.entity.ShoeEntity;
 import com.abcmart.shoestore.repository.OrderRepository;
@@ -142,7 +143,91 @@ class OrderServiceTest {
     }
 
     @Test
+    @DisplayName("부분 취소가 가능하고, 주문이 정상으로 남아있는지 확인한다.")
     void partialCancel() {
+
+        // given
+        Long shoeCode1 = 1L;
+        OrderDetailEntity orderDetailEntity = fixtureMonkey.giveMeBuilder(OrderDetailEntity.class)
+            .set("orderStatus", OrderStatus.NORMAL)
+            .set("shoeCode", shoeCode1)
+            .set("count", 5L)
+            .sample();
+
+        Long orderNo = 1L;
+        OrderEntity orderEntity = fixtureMonkey.giveMeBuilder(OrderEntity.class)
+            .set("orderNo", orderNo)
+            .set("status", OrderStatus.NORMAL)
+            .set("details", List.of(orderDetailEntity))
+            .sample();
+
+        ShoeEntity shoeEntity1 = fixtureMonkey.giveMeBuilder(ShoeEntity.class)
+            .set("shoeCode", shoeCode1)
+            .setNotNull("price")
+            .sample();
+
+        given(shoeRepository.findByShoeCode(anyLong())).willReturn(shoeEntity1);
+        given(orderRepository.findByOrderNo(any())).willReturn(orderEntity);
+        given(orderRepository.save(any(OrderEntity.class)))
+            .willAnswer(invocation -> invocation.getArgument(0));
+
+
+        // when
+        long removeCount = 1L;
+        Order order = orderService.partialCancel(orderNo, shoeCode1, removeCount);
+
+
+        // then
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.NORMAL);
+
+        OrderDetail orderDetail = order.getDetails().stream()
+            .filter(detail -> detail.getShoeCode().equals(shoeCode1)).findFirst().get();
+        assertThat(orderDetail.getCount()).isEqualTo(orderDetailEntity.getCount() - removeCount);
+        assertThat(orderDetail.getOrderStatus()).isEqualTo(OrderStatus.NORMAL);
+    }
+
+    @Test
+    @DisplayName("잔여 항목을 모두 부분 취소했을 때, 주문이 전체 취소 되는지 확인한다.")
+    void totalCancelWithPartialCancel() {
+
+        // given
+        Long shoeCode1 = 1L;
+        OrderDetailEntity orderDetailEntity = fixtureMonkey.giveMeBuilder(OrderDetailEntity.class)
+            .set("orderStatus", OrderStatus.NORMAL)
+            .set("shoeCode", shoeCode1)
+            .set("count", 5L)
+            .sample();
+
+        Long orderNo = 1L;
+        OrderEntity orderEntity = fixtureMonkey.giveMeBuilder(OrderEntity.class)
+            .set("orderNo", orderNo)
+            .set("status", OrderStatus.NORMAL)
+            .set("details", List.of(orderDetailEntity))
+            .sample();
+
+        ShoeEntity shoeEntity1 = fixtureMonkey.giveMeBuilder(ShoeEntity.class)
+            .set("shoeCode", shoeCode1)
+            .setNotNull("price")
+            .sample();
+
+        given(shoeRepository.findByShoeCode(anyLong())).willReturn(shoeEntity1);
+        given(orderRepository.findByOrderNo(any())).willReturn(orderEntity);
+        given(orderRepository.save(any(OrderEntity.class)))
+            .willAnswer(invocation -> invocation.getArgument(0));
+
+
+        // when
+        long removeCount = 5L;
+        Order order = orderService.partialCancel(orderNo, shoeCode1, removeCount);
+
+
+        // then
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCEL);
+
+        OrderDetail orderDetail = order.getDetails().stream()
+            .filter(detail -> detail.getShoeCode().equals(shoeCode1)).findFirst().get();
+        assertThat(orderDetail.getCount()).isEqualTo(orderDetailEntity.getCount() - removeCount);
+        assertThat(orderDetail.getOrderStatus()).isEqualTo(OrderStatus.CANCEL);
     }
 
     @Test
