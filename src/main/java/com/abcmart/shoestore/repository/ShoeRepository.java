@@ -1,0 +1,14 @@
+package com.abcmart.shoestore.repository;
+
+import com.abcmart.shoestore.entity.ShoeEntity;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface ShoeRepository {
+
+    ShoeEntity findByShoeCode(Long shoeCode);
+
+    List<ShoeEntity> findAllByShoeCodes(List<Long> shoeCodes);
+}
