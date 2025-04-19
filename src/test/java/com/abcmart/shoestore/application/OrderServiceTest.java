@@ -7,6 +7,7 @@ import static org.mockito.BDDMockito.given;
 
 import com.abcmart.shoestore.application.request.CreateOrderRequest;
 import com.abcmart.shoestore.application.request.CreateOrderRequest.CreateOrderDetailRequest;
+import com.abcmart.shoestore.domain.OrderPayment;
 import com.abcmart.shoestore.dto.Order;
 import com.abcmart.shoestore.dto.OrderDetail;
 import com.abcmart.shoestore.entity.OrderEntity;
@@ -118,7 +119,26 @@ class OrderServiceTest {
     }
 
     @Test
+    @DisplayName("주문 취소가 가능한지 확인한다.")
     void cancelOrder() {
+
+        // given
+        OrderEntity orderEntity = fixtureMonkey.giveMeBuilder(OrderEntity.class)
+            .set("orderNo", 1L)
+            .set("status", OrderStatus.NORMAL)
+            .sample();
+
+        given(orderRepository.findByOrderNo(any())).willReturn(orderEntity);
+        given(orderRepository.save(any(OrderEntity.class)))
+            .willAnswer(invocation -> invocation.getArgument(0));
+
+
+        // when
+        Order order = orderService.cancelOrder(1L);
+
+
+        // then
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCEL);
     }
 
     @Test
