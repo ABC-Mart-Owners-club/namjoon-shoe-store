@@ -1,0 +1,34 @@
+@startuml
+
+enum OrderStatus {
+NORMAL
+CANCEL
+}
+
+class Order {
+Long orderNo
+OrderStatus orderStatus
+List<OrderDetail> details
+create()
+}
+
+class OrderDetail {
+Long orderDetailNo
+OrderStatus orderStatus
+Long shoeCode
+Long count
+create()
+}
+
+enum CancelType {
+ENTIRE
+PARTIAL
+}
+
+class Cancel {
+CancelType cancelType
+}
+
+Order <-- OrderDetail
+
+@enduml
