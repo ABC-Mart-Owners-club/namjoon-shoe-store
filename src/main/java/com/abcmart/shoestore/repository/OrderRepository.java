@@ -1,7 +1,7 @@
 package com.abcmart.shoestore.repository;
 
-import com.abcmart.shoestore.entity.OrderDetailEntity;
-import com.abcmart.shoestore.entity.OrderEntity;
+import com.abcmart.shoestore.domain.OrderDetail;
+import com.abcmart.shoestore.domain.Order;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -9,9 +9,9 @@ import java.util.List;
 @Repository
 public interface OrderRepository {
 
-    OrderEntity save(OrderEntity orderEntity);
+    Order save(Order order);
 
-    OrderEntity findByOrderNo(Long orderNo);
+    Order findByOrderNo(Long orderNo);
 
-    List<OrderDetailEntity> findAllNormalStatusOrderDetails();
+    List<OrderDetail> findAllNormalStatusOrderDetails();
 }

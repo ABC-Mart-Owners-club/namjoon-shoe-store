@@ -1,6 +1,6 @@
 package com.abcmart.shoestore.application.response;
 
-import com.abcmart.shoestore.dto.Shoe;
+import com.abcmart.shoestore.dto.ShoeDto;
 import lombok.Getter;
 
 import java.math.BigDecimal;
@@ -45,14 +45,14 @@ public class ShoeSaleCountResponse {
             this.totalPrice = price.multiply(BigDecimal.valueOf(saleCount));
         }
 
-        public static SoldShoe of(Shoe shoe, Long saleCount) {
+        public static SoldShoe of(ShoeDto shoeDto, Long saleCount) {
 
             return new SoldShoe(
-                shoe.getShoeCode(),
-                shoe.getShoeName(),
-                shoe.getColor(),
-                shoe.getSize(),
-                shoe.getPrice(),
+                shoeDto.getShoeCode(),
+                shoeDto.getShoeName(),
+                shoeDto.getColor(),
+                shoeDto.getSize(),
+                shoeDto.getPrice(),
                 saleCount
             );
         }

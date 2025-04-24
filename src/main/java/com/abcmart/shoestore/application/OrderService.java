@@ -4,11 +4,11 @@ import com.abcmart.shoestore.application.request.CreateOrderRequest;
 import com.abcmart.shoestore.application.response.ShoeSaleCountResponse;
 import com.abcmart.shoestore.application.response.ShoeSaleCountResponse.SoldShoe;
 import com.abcmart.shoestore.domain.OrderPayment;
-import com.abcmart.shoestore.dto.Order;
-import com.abcmart.shoestore.dto.Shoe;
-import com.abcmart.shoestore.entity.OrderDetailEntity;
-import com.abcmart.shoestore.entity.OrderEntity;
-import com.abcmart.shoestore.entity.ShoeEntity;
+import com.abcmart.shoestore.dto.OrderDto;
+import com.abcmart.shoestore.dto.ShoeDto;
+import com.abcmart.shoestore.domain.OrderDetail;
+import com.abcmart.shoestore.domain.Order;
+import com.abcmart.shoestore.domain.Shoe;
 import com.abcmart.shoestore.repository.OrderRepository;
 import com.abcmart.shoestore.repository.ShoeRepository;
 import java.math.BigDecimal;
@@ -30,39 +30,39 @@ public class OrderService {
     private final OrderRepository orderRepository;
 
     @Transactional
-    public Order createOrder(CreateOrderRequest request) {
+    public OrderDto createOrder(CreateOrderRequest request) {
 
         List<Long> shoeCodes = request.getOrderDetails().stream()
             .map(CreateOrderRequest.CreateOrderDetailRequest::getShoeCode).toList();
 
-        Map<Long, ShoeEntity> shoeEntityMap = shoeRepository.findAllByShoeCodes(shoeCodes).stream()
-            .collect(Collectors.toMap(ShoeEntity::getShoeCode, Function.identity()));
+        Map<Long, Shoe> shoeMap = shoeRepository.findAllByShoeCodes(shoeCodes).stream()
+            .collect(Collectors.toMap(Shoe::getShoeCode, Function.identity()));
 
-        List<OrderDetailEntity> detailEntities = request.getOrderDetails().stream()
-            .map(orderDetail -> OrderDetailEntity.create(orderDetail.getShoeCode(),
+        List<OrderDetail> details = request.getOrderDetails().stream()
+            .map(orderDetail -> OrderDetail.create(orderDetail.getShoeCode(),
                 orderDetail.getCount()))
             .toList();
-        BigDecimal totalPrice = calculateTotalPrice(shoeEntityMap, request.getOrderDetails());
+        BigDecimal totalPrice = calculateTotalPrice(shoeMap, request.getOrderDetails());
         OrderPayment orderPayment = OrderPayment.payInCash(totalPrice);
-        OrderEntity orderEntity = OrderEntity.create(detailEntities, orderPayment);
-        OrderEntity savedEntity = orderRepository.save(orderEntity);
+        Order order = Order.create(details, orderPayment);
+        Order savedOrder = orderRepository.save(order);
 
-        return Order.from(savedEntity);
+        return OrderDto.from(savedOrder);
     }
 
-    private BigDecimal calculateTotalPrice(Map<Long, ShoeEntity> shoeEntityMap,
+    private BigDecimal calculateTotalPrice(Map<Long, Shoe> shoeMap,
         List<CreateOrderRequest.CreateOrderDetailRequest> orderDetails) {
 
         BigDecimal total = BigDecimal.ZERO;
         for (CreateOrderRequest.CreateOrderDetailRequest orderDetail : orderDetails) {
 
             Long shoeCode = orderDetail.getShoeCode();
-            ShoeEntity shoeEntity = shoeEntityMap.get(shoeCode);
-            if (Objects.isNull(shoeEntity)) {
+            Shoe shoe = shoeMap.get(shoeCode);
+            if (Objects.isNull(shoe)) {
                 continue;
             }
 
-            BigDecimal shoesPrice = shoeEntity.getPrice()
+            BigDecimal shoesPrice = shoe.getPrice()
                 .multiply(BigDecimal.valueOf(orderDetail.getCount()));
             total = total.add(shoesPrice);
         }
@@ -71,56 +71,53 @@ public class OrderService {
     }
 
     @Transactional
-    public Order cancelOrder(Long orderNo) {
+    public OrderDto cancelOrder(Long orderNo) {
 
-        OrderEntity targetOrderEntity = orderRepository.findByOrderNo(orderNo);
-        targetOrderEntity.totalCancel();
-        OrderEntity savedEntity = orderRepository.save(targetOrderEntity);
+        Order targetOrder = orderRepository.findByOrderNo(orderNo);
+        targetOrder.totalCancel();
+        Order savedOrder = orderRepository.save(targetOrder);
 
-        return Order.from(savedEntity);
+        return OrderDto.from(savedOrder);
     }
 
     @Transactional
-    public Order partialCancel(Long orderNo, Long shoeCode, Long removeCount) {
+    public OrderDto partialCancel(Long orderNo, Long shoeCode, Long removeCount) {
 
-        ShoeEntity shoeEntity = shoeRepository.findByShoeCode(shoeCode);
+        Shoe shoe = shoeRepository.findByShoeCode(shoeCode);
 
-        OrderEntity orderEntity = orderRepository.findByOrderNo(orderNo);
-        orderEntity.partialCancel(shoeEntity, removeCount);
-        OrderEntity savedEntity = orderRepository.save(orderEntity);
+        Order order = orderRepository.findByOrderNo(orderNo);
+        order.partialCancel(shoe, removeCount);
+        Order savedOrder = orderRepository.save(order);
 
-        return Order.from(savedEntity);
+        return OrderDto.from(savedOrder);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public ShoeSaleCountResponse getShoeSaleCount() {
 
-        List<OrderDetailEntity> orderDetailEntityList = orderRepository.findAllNormalStatusOrderDetails();
+        List<OrderDetail> orderDetailList = orderRepository.findAllNormalStatusOrderDetails();
 
-        List<Long> soldShoeCodes = orderDetailEntityList.stream()
-            .map(OrderDetailEntity::getShoeCode).toList();
-        Map<Long, ShoeEntity> soldShoeEntityMap = shoeRepository.findAllByShoeCodes(soldShoeCodes)
+        List<Long> soldShoeCodes = orderDetailList.stream()
+            .map(OrderDetail::getShoeCode).toList();
+        Map<Long, Shoe> soldShoeMap = shoeRepository.findAllByShoeCodes(soldShoeCodes)
             .stream()
-            .collect(Collectors.toMap(ShoeEntity::getShoeCode, Function.identity()));
+            .collect(Collectors.toMap(Shoe::getShoeCode, Function.identity()));
 
-        HashMap<Long, SoldShoe> soldShoeHashMap = new HashMap<>();
-        orderDetailEntityList.forEach(detailEntity -> {
-            ShoeEntity shoeEntity = soldShoeEntityMap.get(detailEntity.getShoeCode());
-            if (Objects.isNull(shoeEntity)) {
-                return;
-            }
+        HashMap<Long, SoldShoe> soldShoeHashMap = orderDetailList.stream()
+            .filter(detail -> soldShoeMap.containsKey(detail.getShoeCode()))
+            .collect(Collectors.toMap(
+                OrderDetail::getShoeCode,
+                detail -> {
+                    ShoeDto shoeDto = ShoeDto.from(soldShoeMap.get(detail.getShoeCode()));
+                    return SoldShoe.of(shoeDto, detail.getCount());
+                },
+                (existing, added) -> {
+                    existing.updateSaleCountAndTotalPrice(added.getSaleCount());
+                    return existing;
+                },
+                HashMap::new
+            ));
 
-            Shoe shoe = Shoe.from(shoeEntity);
-            Long saleCount = detailEntity.getCount();
-
-            if (soldShoeHashMap.containsKey(shoe.getShoeCode())) {
-                SoldShoe soldShoe = soldShoeHashMap.get(shoe.getShoeCode());
-                soldShoe.updateSaleCountAndTotalPrice(saleCount);
-                return;
-            }
-
-            soldShoeHashMap.put(shoe.getShoeCode(), SoldShoe.of(shoe, saleCount));
-        });
 
         return ShoeSaleCountResponse.from(soldShoeHashMap.values().stream().toList());
     }

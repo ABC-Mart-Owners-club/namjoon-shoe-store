@@ -1,42 +1,40 @@
-package com.abcmart.shoestore.entity;
+package com.abcmart.shoestore.domain;
 
 import com.abcmart.shoestore.tool.OrderStatus;
-import jakarta.persistence.*;
+import jakarta.persistence.Id;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
-@Entity
 @NoArgsConstructor
-public class OrderDetailEntity {
+public class OrderDetail {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long orderDetailNo;
 
-    @Enumerated(EnumType.STRING)
+    @NotNull
     private OrderStatus orderStatus;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    private OrderEntity order;
-
+    @NotNull
     private Long shoeCode;
 
+    @NotNull
     private Long count;
 
-    private OrderDetailEntity(Long shoeCode, Long count) {
+    private OrderDetail(Long shoeCode, Long count) {
 
         this.orderStatus = OrderStatus.NORMAL;
         this.shoeCode = shoeCode;
         this.count = count;
     }
 
-    public static OrderDetailEntity create(Long shoeCode, Long count) {
+    public static OrderDetail create(Long shoeCode, Long count) {
 
-        return new OrderDetailEntity(shoeCode, count);
+        return new OrderDetail(shoeCode, count);
     }
 
-    protected OrderDetailEntity partialCancel(Long removeCount) {
+    protected OrderDetail partialCancel(Long removeCount) {
 
         if (removeCount > this.count) {
             throw new IllegalArgumentException("Remove count exceeds order count");
@@ -47,11 +45,6 @@ public class OrderDetailEntity {
             this.orderStatus = OrderStatus.CANCEL;
         }
         return this;
-    }
-
-    public void link(OrderEntity orderEntity) {
-
-        this.order = orderEntity;
     }
 
     public boolean isNormal() {

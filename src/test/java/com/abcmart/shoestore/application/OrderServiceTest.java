@@ -10,11 +10,11 @@ import com.abcmart.shoestore.application.request.CreateOrderRequest;
 import com.abcmart.shoestore.application.request.CreateOrderRequest.CreateOrderDetailRequest;
 import com.abcmart.shoestore.application.response.ShoeSaleCountResponse;
 import com.abcmart.shoestore.application.response.ShoeSaleCountResponse.SoldShoe;
-import com.abcmart.shoestore.dto.Order;
-import com.abcmart.shoestore.dto.OrderDetail;
-import com.abcmart.shoestore.entity.OrderDetailEntity;
-import com.abcmart.shoestore.entity.OrderEntity;
-import com.abcmart.shoestore.entity.ShoeEntity;
+import com.abcmart.shoestore.dto.OrderDto;
+import com.abcmart.shoestore.dto.OrderDetailDto;
+import com.abcmart.shoestore.domain.OrderDetail;
+import com.abcmart.shoestore.domain.Order;
+import com.abcmart.shoestore.domain.Shoe;
 import com.abcmart.shoestore.repository.OrderRepository;
 import com.abcmart.shoestore.repository.ShoeRepository;
 import com.abcmart.shoestore.tool.OrderStatus;
@@ -55,22 +55,22 @@ class OrderServiceTest {
         Long shoeCode2 = 2L;
         Long shoeCode3 = 3L;
 
-        ShoeEntity shoeEntity1 = fixtureMonkey.giveMeBuilder(ShoeEntity.class)
+        Shoe shoe1 = fixtureMonkey.giveMeBuilder(Shoe.class)
             .set("shoeCode", shoeCode1)
             .setNotNull("price")
             .sample();
-        ShoeEntity shoeEntity2 = fixtureMonkey.giveMeBuilder(ShoeEntity.class)
+        Shoe shoe2 = fixtureMonkey.giveMeBuilder(Shoe.class)
             .set("shoeCode", shoeCode2)
             .setNotNull("price")
             .sample();
-        ShoeEntity shoeEntity3 = fixtureMonkey.giveMeBuilder(ShoeEntity.class)
+        Shoe shoe3 = fixtureMonkey.giveMeBuilder(Shoe.class)
             .set("shoeCode", shoeCode3)
             .setNotNull("price")
             .sample();
-        List<ShoeEntity> shoeEntities = List.of(shoeEntity1, shoeEntity2, shoeEntity3);
+        List<Shoe> shoeEntities = List.of(shoe1, shoe2, shoe3);
 
         given(shoeRepository.findAllByShoeCodes(anyList())).willReturn(shoeEntities);
-        given(orderRepository.save(any(OrderEntity.class)))
+        given(orderRepository.save(any(Order.class)))
             .willAnswer(invocation -> invocation.getArgument(0));
 
 
@@ -86,7 +86,7 @@ class OrderServiceTest {
         );
         CreateOrderRequest request = new CreateOrderRequest(orderDetailRequests, PaymentType.CASH);
 
-        Order result = orderService.createOrder(request);
+        OrderDto result = orderService.createOrder(request);
 
 
         // then
@@ -95,30 +95,30 @@ class OrderServiceTest {
         assertThat(result.getDetails()).isNotEmpty();
         assertThat(result.getDetails()).hasSize(3);
 
-        List<Long> shoeCodes = shoeEntities.stream().map(ShoeEntity::getShoeCode).toList();
+        List<Long> shoeCodes = shoeEntities.stream().map(Shoe::getShoeCode).toList();
         assertThat(
-            result.getDetails().stream().map(OrderDetail::getShoeCode).toList()
+            result.getDetails().stream().map(OrderDetailDto::getShoeCode).toList()
         ).containsExactlyInAnyOrderElementsOf(shoeCodes);
 
-        OrderDetail orderDetail1 = result.getDetails().stream()
-            .filter(orderDetail -> orderDetail.getShoeCode().equals(shoeCode1)).findFirst().get();
+        OrderDetailDto orderDetailDto1 = result.getDetails().stream()
+            .filter(orderDetailDto -> orderDetailDto.getShoeCode().equals(shoeCode1)).findFirst().get();
         assertThat(
-            orderDetail1.getShoeCode().equals(shoeCode1)
-                && orderDetail1.getCount().equals(countOfShoeCode1)
+            orderDetailDto1.getShoeCode().equals(shoeCode1)
+                && orderDetailDto1.getCount().equals(countOfShoeCode1)
         ).isTrue();
 
-        OrderDetail orderDetail2 = result.getDetails().stream()
-            .filter(orderDetail -> orderDetail.getShoeCode().equals(shoeCode2)).findFirst().get();
+        OrderDetailDto orderDetailDto2 = result.getDetails().stream()
+            .filter(orderDetailDto -> orderDetailDto.getShoeCode().equals(shoeCode2)).findFirst().get();
         assertThat(
-            orderDetail2.getShoeCode().equals(shoeCode2)
-                && orderDetail2.getCount().equals(countOfShoeCode2)
+            orderDetailDto2.getShoeCode().equals(shoeCode2)
+                && orderDetailDto2.getCount().equals(countOfShoeCode2)
         ).isTrue();
 
-        OrderDetail orderDetail3 = result.getDetails().stream()
-            .filter(orderDetail -> orderDetail.getShoeCode().equals(shoeCode3)).findFirst().get();
+        OrderDetailDto orderDetailDto3 = result.getDetails().stream()
+            .filter(orderDetailDto -> orderDetailDto.getShoeCode().equals(shoeCode3)).findFirst().get();
         assertThat(
-            orderDetail3.getShoeCode().equals(shoeCode3)
-                && orderDetail3.getCount().equals(countOfShoeCode3)
+            orderDetailDto3.getShoeCode().equals(shoeCode3)
+                && orderDetailDto3.getCount().equals(countOfShoeCode3)
         ).isTrue();
     }
 
@@ -127,22 +127,22 @@ class OrderServiceTest {
     void cancelOrder() {
 
         // given
-        OrderEntity orderEntity = fixtureMonkey.giveMeBuilder(OrderEntity.class)
+        Order order = fixtureMonkey.giveMeBuilder(Order.class)
             .set("orderNo", 1L)
             .set("status", OrderStatus.NORMAL)
             .sample();
 
-        given(orderRepository.findByOrderNo(any())).willReturn(orderEntity);
-        given(orderRepository.save(any(OrderEntity.class)))
+        given(orderRepository.findByOrderNo(any())).willReturn(order);
+        given(orderRepository.save(any(Order.class)))
             .willAnswer(invocation -> invocation.getArgument(0));
 
 
         // when
-        Order order = orderService.cancelOrder(1L);
+        OrderDto orderDto = orderService.cancelOrder(1L);
 
 
         // then
-        assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCEL);
+        assertThat(orderDto.getStatus()).isEqualTo(OrderStatus.CANCEL);
     }
 
     @Test
@@ -151,42 +151,42 @@ class OrderServiceTest {
 
         // given
         Long shoeCode1 = 1L;
-        OrderDetailEntity orderDetailEntity = fixtureMonkey.giveMeBuilder(OrderDetailEntity.class)
+        OrderDetail orderDetail = fixtureMonkey.giveMeBuilder(OrderDetail.class)
             .set("orderStatus", OrderStatus.NORMAL)
             .set("shoeCode", shoeCode1)
             .set("count", 5L)
             .sample();
 
         Long orderNo = 1L;
-        OrderEntity orderEntity = fixtureMonkey.giveMeBuilder(OrderEntity.class)
+        Order order = fixtureMonkey.giveMeBuilder(Order.class)
             .set("orderNo", orderNo)
             .set("status", OrderStatus.NORMAL)
-            .set("details", List.of(orderDetailEntity))
+            .set("details", List.of(orderDetail))
             .sample();
 
-        ShoeEntity shoeEntity1 = fixtureMonkey.giveMeBuilder(ShoeEntity.class)
+        Shoe shoe1 = fixtureMonkey.giveMeBuilder(Shoe.class)
             .set("shoeCode", shoeCode1)
             .setNotNull("price")
             .sample();
 
-        given(shoeRepository.findByShoeCode(anyLong())).willReturn(shoeEntity1);
-        given(orderRepository.findByOrderNo(any())).willReturn(orderEntity);
-        given(orderRepository.save(any(OrderEntity.class)))
+        given(shoeRepository.findByShoeCode(anyLong())).willReturn(shoe1);
+        given(orderRepository.findByOrderNo(any())).willReturn(order);
+        given(orderRepository.save(any(Order.class)))
             .willAnswer(invocation -> invocation.getArgument(0));
 
 
         // when
         long removeCount = 1L;
-        Order order = orderService.partialCancel(orderNo, shoeCode1, removeCount);
+        OrderDto orderDto = orderService.partialCancel(orderNo, shoeCode1, removeCount);
 
 
         // then
-        assertThat(order.getStatus()).isEqualTo(OrderStatus.NORMAL);
+        assertThat(orderDto.getStatus()).isEqualTo(OrderStatus.NORMAL);
 
-        OrderDetail orderDetail = order.getDetails().stream()
+        OrderDetailDto orderDetailDto = orderDto.getDetails().stream()
             .filter(detail -> detail.getShoeCode().equals(shoeCode1)).findFirst().get();
-        assertThat(orderDetail.getCount()).isEqualTo(orderDetailEntity.getCount() - removeCount);
-        assertThat(orderDetail.getOrderStatus()).isEqualTo(OrderStatus.NORMAL);
+        assertThat(orderDetailDto.getCount()).isEqualTo(orderDetail.getCount() - removeCount);
+        assertThat(orderDetailDto.getOrderStatus()).isEqualTo(OrderStatus.NORMAL);
     }
 
     @Test
@@ -195,42 +195,42 @@ class OrderServiceTest {
 
         // given
         Long shoeCode1 = 1L;
-        OrderDetailEntity orderDetailEntity = fixtureMonkey.giveMeBuilder(OrderDetailEntity.class)
+        OrderDetail orderDetail = fixtureMonkey.giveMeBuilder(OrderDetail.class)
             .set("orderStatus", OrderStatus.NORMAL)
             .set("shoeCode", shoeCode1)
             .set("count", 5L)
             .sample();
 
         Long orderNo = 1L;
-        OrderEntity orderEntity = fixtureMonkey.giveMeBuilder(OrderEntity.class)
+        Order order = fixtureMonkey.giveMeBuilder(Order.class)
             .set("orderNo", orderNo)
             .set("status", OrderStatus.NORMAL)
-            .set("details", List.of(orderDetailEntity))
+            .set("details", List.of(orderDetail))
             .sample();
 
-        ShoeEntity shoeEntity1 = fixtureMonkey.giveMeBuilder(ShoeEntity.class)
+        Shoe shoe1 = fixtureMonkey.giveMeBuilder(Shoe.class)
             .set("shoeCode", shoeCode1)
             .setNotNull("price")
             .sample();
 
-        given(shoeRepository.findByShoeCode(anyLong())).willReturn(shoeEntity1);
-        given(orderRepository.findByOrderNo(any())).willReturn(orderEntity);
-        given(orderRepository.save(any(OrderEntity.class)))
+        given(shoeRepository.findByShoeCode(anyLong())).willReturn(shoe1);
+        given(orderRepository.findByOrderNo(any())).willReturn(order);
+        given(orderRepository.save(any(Order.class)))
             .willAnswer(invocation -> invocation.getArgument(0));
 
 
         // when
         long removeCount = 5L;
-        Order order = orderService.partialCancel(orderNo, shoeCode1, removeCount);
+        OrderDto orderDto = orderService.partialCancel(orderNo, shoeCode1, removeCount);
 
 
         // then
-        assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCEL);
+        assertThat(orderDto.getStatus()).isEqualTo(OrderStatus.CANCEL);
 
-        OrderDetail orderDetail = order.getDetails().stream()
+        OrderDetailDto orderDetailDto = orderDto.getDetails().stream()
             .filter(detail -> detail.getShoeCode().equals(shoeCode1)).findFirst().get();
-        assertThat(orderDetail.getCount()).isEqualTo(orderDetailEntity.getCount() - removeCount);
-        assertThat(orderDetail.getOrderStatus()).isEqualTo(OrderStatus.CANCEL);
+        assertThat(orderDetailDto.getCount()).isEqualTo(orderDetail.getCount() - removeCount);
+        assertThat(orderDetailDto.getOrderStatus()).isEqualTo(OrderStatus.CANCEL);
     }
 
     @Test
@@ -242,45 +242,45 @@ class OrderServiceTest {
         Long shoeCode2 = 2L;
         Long shoeCode3 = 3L;
 
-        ShoeEntity shoeEntity1 = fixtureMonkey.giveMeBuilder(ShoeEntity.class)
+        Shoe shoe1 = fixtureMonkey.giveMeBuilder(Shoe.class)
             .set("shoeCode", shoeCode1)
             .set("price", BigDecimal.valueOf(50_000))
             .sample();
-        ShoeEntity shoeEntity2 = fixtureMonkey.giveMeBuilder(ShoeEntity.class)
+        Shoe shoe2 = fixtureMonkey.giveMeBuilder(Shoe.class)
             .set("shoeCode", shoeCode2)
             .set("price", BigDecimal.valueOf(100_000))
             .sample();
-        ShoeEntity shoeEntity3 = fixtureMonkey.giveMeBuilder(ShoeEntity.class)
+        Shoe shoe3 = fixtureMonkey.giveMeBuilder(Shoe.class)
             .set("shoeCode", shoeCode3)
             .set("price", BigDecimal.valueOf(70_000))
             .sample();
-        List<ShoeEntity> shoeEntities = List.of(shoeEntity1, shoeEntity2, shoeEntity3);
+        List<Shoe> shoeEntities = List.of(shoe1, shoe2, shoe3);
 
         given(shoeRepository.findAllByShoeCodes(anyList())).willReturn(shoeEntities);
 
         long shoe1SaleCount = 2L;
-        OrderDetailEntity orderDetailEntity1 = fixtureMonkey.giveMeBuilder(OrderDetailEntity.class)
+        OrderDetail orderDetail1 = fixtureMonkey.giveMeBuilder(OrderDetail.class)
             .set("orderStatus", OrderStatus.NORMAL)
             .set("shoeCode", shoeCode1)
             .set("count", shoe1SaleCount)
             .sample();
         long shoe2SaleCount = 3L;
-        OrderDetailEntity orderDetailEntity2 = fixtureMonkey.giveMeBuilder(OrderDetailEntity.class)
+        OrderDetail orderDetail2 = fixtureMonkey.giveMeBuilder(OrderDetail.class)
             .set("orderStatus", OrderStatus.NORMAL)
             .set("shoeCode", shoeCode2)
             .set("count", shoe2SaleCount)
             .sample();
         long shoe3SaleCount = 5L;
-        OrderDetailEntity orderDetailEntity3 = fixtureMonkey.giveMeBuilder(OrderDetailEntity.class)
+        OrderDetail orderDetail3 = fixtureMonkey.giveMeBuilder(OrderDetail.class)
             .set("orderStatus", OrderStatus.NORMAL)
             .set("shoeCode", shoeCode3)
             .set("count", shoe3SaleCount)
             .sample();
-        List<OrderDetailEntity> orderDetailEntityList = List.of(
-            orderDetailEntity1, orderDetailEntity2, orderDetailEntity3
+        List<OrderDetail> orderDetailList = List.of(
+            orderDetail1, orderDetail2, orderDetail3
         );
 
-        given(orderRepository.findAllNormalStatusOrderDetails()).willReturn(orderDetailEntityList);
+        given(orderRepository.findAllNormalStatusOrderDetails()).willReturn(orderDetailList);
 
 
         // when
@@ -293,22 +293,22 @@ class OrderServiceTest {
         SoldShoe soldShoe1 = shoeSaleCountResponse.getSoldShoes().stream()
             .filter(soldShoe -> soldShoe.getShoeCode().equals(shoeCode1)).findFirst().get();
         assertThat(
-            soldShoe1.getSaleCount().equals(orderDetailEntity1.getCount())
-            && soldShoe1.getTotalPrice().equals(shoeEntity1.getPrice().multiply(BigDecimal.valueOf(shoe1SaleCount)))
+            soldShoe1.getSaleCount().equals(orderDetail1.getCount())
+            && soldShoe1.getTotalPrice().equals(shoe1.getPrice().multiply(BigDecimal.valueOf(shoe1SaleCount)))
         ).isTrue();
 
         SoldShoe soldShoe2 = shoeSaleCountResponse.getSoldShoes().stream()
             .filter(soldShoe -> soldShoe.getShoeCode().equals(shoeCode2)).findFirst().get();
         assertThat(
-            soldShoe2.getSaleCount().equals(orderDetailEntity2.getCount())
-                && soldShoe2.getTotalPrice().equals(shoeEntity2.getPrice().multiply(BigDecimal.valueOf(shoe2SaleCount)))
+            soldShoe2.getSaleCount().equals(orderDetail2.getCount())
+                && soldShoe2.getTotalPrice().equals(shoe2.getPrice().multiply(BigDecimal.valueOf(shoe2SaleCount)))
         ).isTrue();
 
         SoldShoe soldShoe3 = shoeSaleCountResponse.getSoldShoes().stream()
             .filter(soldShoe -> soldShoe.getShoeCode().equals(shoeCode3)).findFirst().get();
         assertThat(
-            soldShoe3.getSaleCount().equals(orderDetailEntity3.getCount())
-                && soldShoe3.getTotalPrice().equals(shoeEntity3.getPrice().multiply(BigDecimal.valueOf(shoe3SaleCount)))
+            soldShoe3.getSaleCount().equals(orderDetail3.getCount())
+                && soldShoe3.getTotalPrice().equals(shoe3.getPrice().multiply(BigDecimal.valueOf(shoe3SaleCount)))
         ).isTrue();
     }
 }

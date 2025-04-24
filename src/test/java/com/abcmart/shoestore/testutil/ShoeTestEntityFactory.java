@@ -1,14 +1,14 @@
 package com.abcmart.shoestore.testutil;
 
-import com.abcmart.shoestore.entity.ShoeEntity;
+import com.abcmart.shoestore.domain.Shoe;
 import java.math.BigDecimal;
 
-public class ShoeTestEntityFactory extends TestEntityFactory<ShoeEntity> {
+public class ShoeTestEntityFactory extends TestEntityFactory<Shoe> {
 
-    public static ShoeEntity create(Long shoeCode, String shoeName, String color, int size, BigDecimal price) {
+    public static Shoe create(Long shoeCode, String shoeName, String color, int size, BigDecimal price) {
 
-        ShoeEntity shoeEntity = ShoeEntity.create(shoeName, color, size, price);
-        setId(shoeEntity, "shoeCode", shoeCode);
-        return shoeEntity;
+        Shoe shoe = Shoe.create(shoeName, color, size, price);
+        setId(shoe, "shoeCode", shoeCode);
+        return shoe;
     }
 }
