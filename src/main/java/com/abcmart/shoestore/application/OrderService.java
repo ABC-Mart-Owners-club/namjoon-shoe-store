@@ -91,34 +91,4 @@ public class OrderService {
 
         return OrderDto.from(savedOrder);
     }
-
-    @Transactional(readOnly = true)
-    public ShoeSaleCountResponse getShoeSaleCount() {
-
-        List<OrderDetail> orderDetailList = orderRepository.findAllNormalStatusOrderDetails();
-
-        List<Long> soldShoeCodes = orderDetailList.stream()
-            .map(OrderDetail::getShoeCode).toList();
-        Map<Long, Shoe> soldShoeMap = shoeRepository.findAllByShoeCodes(soldShoeCodes)
-            .stream()
-            .collect(Collectors.toMap(Shoe::getShoeCode, Function.identity()));
-
-        HashMap<Long, SoldShoe> soldShoeHashMap = orderDetailList.stream()
-            .filter(detail -> soldShoeMap.containsKey(detail.getShoeCode()))
-            .collect(Collectors.toMap(
-                OrderDetail::getShoeCode,
-                detail -> {
-                    ShoeDto shoeDto = ShoeDto.from(soldShoeMap.get(detail.getShoeCode()));
-                    return SoldShoe.of(shoeDto, detail.getCount());
-                },
-                (existing, added) -> {
-                    existing.updateSaleCountAndTotalPrice(added.getSaleCount());
-                    return existing;
-                },
-                HashMap::new
-            ));
-
-
-        return ShoeSaleCountResponse.from(soldShoeHashMap.values().stream().toList());
-    }
 }

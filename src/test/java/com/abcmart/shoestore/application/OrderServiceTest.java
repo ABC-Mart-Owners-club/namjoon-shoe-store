@@ -42,6 +42,9 @@ class OrderServiceTest {
     @InjectMocks
     private OrderService orderService;
 
+    @InjectMocks
+    private AdminService adminService;
+
     private static final FixtureMonkey fixtureMonkey = FixtureMonkey.builder()
         .objectIntrospector(FieldReflectionArbitraryIntrospector.INSTANCE)
         .build();
@@ -284,7 +287,7 @@ class OrderServiceTest {
 
 
         // when
-        ShoeSaleCountResponse shoeSaleCountResponse = orderService.getShoeSaleCount();
+        ShoeSaleCountResponse shoeSaleCountResponse = adminService.getShoeSaleCount();
 
 
         // then
