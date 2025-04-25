@@ -1,15 +1,30 @@
 @startuml
 
+class Shoe {
+Long shoeCode
+String shoeName
+String color
+int size
+BigDecimal price
++ create()
+}
+
 enum OrderStatus {
 NORMAL
-CANCEL
+CANCELLED
 }
 
 class Order {
 Long orderNo
 OrderStatus orderStatus
 List<OrderDetail> details
-create()
+BigDecimal totalAmount
+List<OrderPayment> payments
++ create()
++ totalCancel()
++ partialCancel()
+- validateAvailableCancel()
+- validateAllCancelled()
 }
 
 class OrderDetail {
@@ -17,18 +32,39 @@ Long orderDetailNo
 OrderStatus orderStatus
 Long shoeCode
 Long count
-create()
++ create()
+* partialCancel()
++ isNormal()
++ isCancelled()
 }
 
-enum CancelType {
-ENTIRE
-PARTIAL
+class OrderPayment {
+PaymentType paymentType
+CreditCardType creditCardType
+BigDecimal paidAmount
++ payInCash()
++ payInCreditCard()
++ partialCancel()
 }
 
-class Cancel {
-CancelType cancelType
+enum PaymentType {
+CASH
+CREDIT_CARD
 }
+
+enum CreditCardType {
+SHINHAN
+SAMSUNG
+KB_KOOKMIN
+HYUNDAI
+LOTTE
+WOORI
+HANA
+BC
+}
+
 
 Order <-- OrderDetail
+Order <-- OrderPayment
 
 @enduml
