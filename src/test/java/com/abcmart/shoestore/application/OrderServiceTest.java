@@ -8,13 +8,16 @@ import static org.mockito.BDDMockito.given;
 
 import com.abcmart.shoestore.application.request.CreateOrderRequest;
 import com.abcmart.shoestore.application.request.CreateOrderRequest.CreateOrderDetailRequest;
+import com.abcmart.shoestore.application.request.CreateOrderRequest.CreateOrderPaymentRequest;
 import com.abcmart.shoestore.application.response.ShoeSaleCountResponse;
 import com.abcmart.shoestore.application.response.ShoeSaleCountResponse.SoldShoe;
+import com.abcmart.shoestore.domain.OrderPayment;
 import com.abcmart.shoestore.dto.OrderDto;
 import com.abcmart.shoestore.dto.OrderDetailDto;
 import com.abcmart.shoestore.domain.OrderDetail;
 import com.abcmart.shoestore.domain.Order;
 import com.abcmart.shoestore.domain.Shoe;
+import com.abcmart.shoestore.dto.OrderPaymentDto;
 import com.abcmart.shoestore.repository.OrderRepository;
 import com.abcmart.shoestore.repository.ShoeRepository;
 import com.abcmart.shoestore.tool.OrderStatus;
@@ -23,6 +26,9 @@ import com.navercorp.fixturemonkey.FixtureMonkey;
 import com.navercorp.fixturemonkey.api.introspector.FieldReflectionArbitraryIntrospector;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -87,13 +93,20 @@ class OrderServiceTest {
             new CreateOrderDetailRequest(shoeCode2, countOfShoeCode2),
             new CreateOrderDetailRequest(shoeCode3, countOfShoeCode3)
         );
-        CreateOrderRequest request = new CreateOrderRequest(orderDetailRequests, PaymentType.CASH);
+        BigDecimal totalPrice = shoe1.getPrice().add(shoe2.getPrice()).add(shoe3.getPrice());
+        List<CreateOrderPaymentRequest> orderPaymentRequests = List.of(
+            new CreateOrderPaymentRequest(PaymentType.CASH, null, totalPrice));
+        CreateOrderRequest request = new CreateOrderRequest(orderDetailRequests, orderPaymentRequests);
 
         OrderDto result = orderService.createOrder(request);
 
 
         // then
-        assertThat(result.getOrderPayment().getType()).isEqualTo(PaymentType.CASH);
+        List<PaymentType> paymentTypeList = result.getOrderPayments().stream()
+            .map(OrderPaymentDto::getPaymentType)
+            .filter(PaymentType::isCash)
+            .toList();
+        assertThat(paymentTypeList).contains(PaymentType.CASH);
         assertThat(result.getStatus()).isEqualTo(OrderStatus.NORMAL);
         assertThat(result.getDetails()).isNotEmpty();
         assertThat(result.getDetails()).hasSize(3);
@@ -160,11 +173,19 @@ class OrderServiceTest {
             .set("count", 5L)
             .sample();
 
+        List<OrderPayment> orderPayments = List.of(
+            fixtureMonkey.giveMeBuilder(OrderPayment.class).setNotNull("id").sample(),
+            fixtureMonkey.giveMeBuilder(OrderPayment.class).setNotNull("id").sample()
+        );
+
         Long orderNo = 1L;
         Order order = fixtureMonkey.giveMeBuilder(Order.class)
             .set("orderNo", orderNo)
             .set("status", OrderStatus.NORMAL)
             .set("details", List.of(orderDetail))
+            .set("orderPayments", orderPayments.stream()
+                .collect(Collectors.toMap(OrderPayment::getId, Function.identity()))
+            )
             .sample();
 
         Shoe shoe1 = fixtureMonkey.giveMeBuilder(Shoe.class)
@@ -204,11 +225,19 @@ class OrderServiceTest {
             .set("count", 5L)
             .sample();
 
+        List<OrderPayment> orderPayments = List.of(
+            fixtureMonkey.giveMeBuilder(OrderPayment.class).setNotNull("id").sample(),
+            fixtureMonkey.giveMeBuilder(OrderPayment.class).setNotNull("id").sample()
+        );
+
         Long orderNo = 1L;
         Order order = fixtureMonkey.giveMeBuilder(Order.class)
             .set("orderNo", orderNo)
             .set("status", OrderStatus.NORMAL)
             .set("details", List.of(orderDetail))
+            .set("orderPayments", orderPayments.stream()
+                .collect(Collectors.toMap(OrderPayment::getId, Function.identity()))
+            )
             .sample();
 
         Shoe shoe1 = fixtureMonkey.giveMeBuilder(Shoe.class)

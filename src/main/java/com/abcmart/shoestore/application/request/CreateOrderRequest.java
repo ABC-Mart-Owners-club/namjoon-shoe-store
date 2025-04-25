@@ -1,6 +1,8 @@
 package com.abcmart.shoestore.application.request;
 
+import com.abcmart.shoestore.tool.CreditCardType;
 import com.abcmart.shoestore.tool.PaymentType;
+import java.math.BigDecimal;
 import lombok.Getter;
 
 import java.util.List;
@@ -11,7 +13,7 @@ import lombok.RequiredArgsConstructor;
 public class CreateOrderRequest {
 
     private final List<CreateOrderDetailRequest> orderDetails;
-    private final PaymentType paymentType;
+    private final List<CreateOrderPaymentRequest> payments;
 
     @Getter
     @RequiredArgsConstructor
@@ -19,5 +21,14 @@ public class CreateOrderRequest {
 
         private final Long shoeCode;
         private final Long count;
+    }
+
+    @Getter
+    @RequiredArgsConstructor
+    public static class CreateOrderPaymentRequest {
+
+        private final PaymentType paymentType;
+        private final CreditCardType creditCardType;
+        private final BigDecimal paidAmount;
     }
 }
