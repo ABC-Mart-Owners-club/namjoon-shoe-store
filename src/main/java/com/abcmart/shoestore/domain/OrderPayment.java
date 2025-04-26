@@ -5,6 +5,7 @@ import com.abcmart.shoestore.tool.PaymentType;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotNull;
+import java.util.UUID;
 import lombok.Getter;
 
 import java.math.BigDecimal;
@@ -15,7 +16,7 @@ import lombok.NoArgsConstructor;
 public class OrderPayment {
 
     @Id
-    private Long id;
+    private String id;
 
     @NotNull
     private PaymentType type;
@@ -28,6 +29,7 @@ public class OrderPayment {
 
     private OrderPayment(PaymentType type, @Nullable CreditCardType creditCardType, BigDecimal paidAmount) {
 
+        this.id = UUID.randomUUID().toString();
         this.type = type;
         this.creditCardType = creditCardType;
         this.paidAmount = paidAmount;

@@ -31,7 +31,7 @@ public class Order {
     private BigDecimal totalAmount;
 
     @NotEmpty
-    private Map<Long, OrderPayment> orderPayments;
+    private Map<String, OrderPayment> orderPayments;
 
     private Order(List<OrderDetail> details, BigDecimal totalAmount, List<OrderPayment> orderPayments) {
 
@@ -79,7 +79,7 @@ public class Order {
             .findFirst();
         if (availablePayment.isPresent()) {
 
-            Long paymentId = availablePayment.get().getId();
+            String paymentId = availablePayment.get().getId();
             Optional<OrderPayment> targetPayment = Optional.ofNullable(this.orderPayments.get(paymentId));
             if (targetPayment.isEmpty()) {
                 throw new IllegalArgumentException("OrderPayment not found");
