@@ -1,10 +1,10 @@
 package com.abcmart.shoestore.repository;
 
-import com.abcmart.shoestore.domain.OrderDetail;
 import com.abcmart.shoestore.domain.Order;
-import org.springframework.stereotype.Repository;
-
+import com.abcmart.shoestore.domain.OrderDetail;
+import com.abcmart.shoestore.domain.OrderPayment;
 import java.util.List;
+import org.springframework.stereotype.Repository;
 
 @Repository
 public interface OrderRepository {
@@ -14,4 +14,6 @@ public interface OrderRepository {
     Order findByOrderNo(Long orderNo);
 
     List<OrderDetail> findAllNormalStatusOrderDetails();
+
+    List<OrderPayment> findAllCreditCardOrderPayments();
 }

@@ -4,13 +4,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
 
+import com.abcmart.shoestore.application.response.ShoeSaleAmountResponse;
+import com.abcmart.shoestore.application.response.ShoeSaleAmountResponse.CreditCardSaleAmountResponse;
 import com.abcmart.shoestore.application.response.ShoeSaleCountResponse;
 import com.abcmart.shoestore.application.response.ShoeSaleCountResponse.SoldShoe;
 import com.abcmart.shoestore.domain.OrderDetail;
+import com.abcmart.shoestore.domain.OrderPayment;
 import com.abcmart.shoestore.domain.Shoe;
 import com.abcmart.shoestore.repository.OrderRepository;
 import com.abcmart.shoestore.repository.ShoeRepository;
+import com.abcmart.shoestore.tool.CreditCardType;
 import com.abcmart.shoestore.tool.OrderStatus;
+import com.abcmart.shoestore.tool.PaymentType;
 import com.navercorp.fixturemonkey.FixtureMonkey;
 import com.navercorp.fixturemonkey.api.introspector.FieldReflectionArbitraryIntrospector;
 import java.math.BigDecimal;
@@ -115,5 +120,42 @@ class AdminServiceTest {
             soldShoe3.getSaleCount().equals(orderDetail3.getCount())
                 && soldShoe3.getTotalPrice().equals(shoe3.getPrice().multiply(BigDecimal.valueOf(shoe3SaleCount)))
         ).isTrue();
+    }
+
+
+    @Test
+    @DisplayName("카드사 별 판매 금액을 조회한다.")
+    void getShoeSaleAmountByCreditCardType() {
+
+        // given
+        OrderPayment orderPayment1 = createOrderPaymentWithCreditCard();
+        OrderPayment orderPayment2 = createOrderPaymentWithCreditCard();
+        OrderPayment orderPayment3 = createOrderPaymentWithCreditCard();
+        List<OrderPayment> orderPaymentList = List.of(orderPayment1, orderPayment2, orderPayment3);
+        given(orderRepository.findAllCreditCardOrderPayments()).willReturn(orderPaymentList);
+
+
+        // when
+        ShoeSaleAmountResponse result = adminService.getShoeSaleAmountByCreditCardType();
+
+
+        // then
+        List<CreditCardType> requestCreditCardTypeList = orderPaymentList.stream()
+            .map(OrderPayment::getCreditCardType)
+            .distinct()
+            .toList();
+        List<CreditCardType> creditCardTypeResultList = result.getCreditCardSaleAmounts().stream()
+            .map(CreditCardSaleAmountResponse::getCreditCardType)
+            .toList();
+        assertThat(creditCardTypeResultList).contains(requestCreditCardTypeList.toArray(new CreditCardType[0]));
+    }
+
+    private static OrderPayment createOrderPaymentWithCreditCard() {
+
+        return fixtureMonkey.giveMeBuilder(OrderPayment.class)
+            .set("type", PaymentType.CREDIT_CARD)
+            .setNotNull("creditCardType")
+            .setNotNull("paidAmount")
+            .sample();
     }
 }

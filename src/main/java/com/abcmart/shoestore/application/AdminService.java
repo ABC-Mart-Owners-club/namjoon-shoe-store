@@ -1,12 +1,18 @@
 package com.abcmart.shoestore.application;
 
+import com.abcmart.shoestore.application.response.ShoeSaleAmountResponse;
+import com.abcmart.shoestore.application.response.ShoeSaleAmountResponse.CreditCardSaleAmountResponse;
 import com.abcmart.shoestore.application.response.ShoeSaleCountResponse;
 import com.abcmart.shoestore.application.response.ShoeSaleCountResponse.SoldShoe;
 import com.abcmart.shoestore.domain.OrderDetail;
+import com.abcmart.shoestore.domain.OrderPayment;
 import com.abcmart.shoestore.domain.Shoe;
 import com.abcmart.shoestore.dto.ShoeDto;
 import com.abcmart.shoestore.repository.OrderRepository;
 import com.abcmart.shoestore.repository.ShoeRepository;
+import com.abcmart.shoestore.tool.CreditCardType;
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,5 +56,27 @@ public class AdminService {
             ));
 
         return ShoeSaleCountResponse.from(soldShoeHashMap.values().stream().toList());
+    }
+
+    @Transactional(readOnly = true)
+    public ShoeSaleAmountResponse getShoeSaleAmountByCreditCardType() {
+
+        List<OrderPayment> creditCardOrderPayments = orderRepository.findAllCreditCardOrderPayments();
+
+        Map<CreditCardType, List<OrderPayment>> creditCardGrouping = creditCardOrderPayments.stream()
+            .collect(Collectors.groupingBy(OrderPayment::getCreditCardType));
+
+        List<CreditCardSaleAmountResponse> creditCardSaleAmounts = new ArrayList<>();
+        for (CreditCardType creditCardType : creditCardGrouping.keySet()) {
+
+            List<OrderPayment> orderPayments = creditCardGrouping.get(creditCardType);
+            BigDecimal addedAmount = orderPayments.stream()
+                .map(OrderPayment::getPaidAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            creditCardSaleAmounts.add(CreditCardSaleAmountResponse.of(creditCardType, addedAmount));
+        }
+
+        return ShoeSaleAmountResponse.from(creditCardSaleAmounts);
     }
 }
