@@ -81,11 +81,9 @@ public class Order {
 
             String paymentId = availablePayment.get().getId();
             Optional<OrderPayment> targetPayment = Optional.ofNullable(this.orderPayments.get(paymentId));
-            if (targetPayment.isEmpty()) {
-                throw new IllegalArgumentException("OrderPayment not found");
-            }
-
-            targetPayment.get().partialCancel(totalCancelAmount);
+            targetPayment.orElseThrow(
+                () -> new IllegalArgumentException("OrderPayment not found")
+            ).partialCancel(totalCancelAmount);
 
         } else {
 
