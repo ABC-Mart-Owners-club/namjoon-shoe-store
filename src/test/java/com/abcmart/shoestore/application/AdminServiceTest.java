@@ -144,8 +144,8 @@ class AdminServiceTest {
             .map(OrderPayment::getCreditCardType)
             .distinct()
             .toList();
-        List<CreditCardType> creditCardTypeResultList = result.getCreditCardSaleAmounts().stream()
-            .map(CreditCardSaleAmountResponse::getCreditCardType)
+        List<CreditCardType> creditCardTypeResultList = result.creditCardSaleAmounts().stream()
+            .map(CreditCardSaleAmountResponse::creditCardType)
             .toList();
         assertThat(creditCardTypeResultList).contains(requestCreditCardTypeList.toArray(new CreditCardType[0]));
     }
