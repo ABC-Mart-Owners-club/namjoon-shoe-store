@@ -1,5 +1,10 @@
 package com.abcmart.shoestore.application;
 
+import static com.abcmart.shoestore.testutil.OrderPaymentTestDomainFactory.createCash;
+import static com.abcmart.shoestore.testutil.OrderPaymentTestDomainFactory.createCreditCard;
+import static com.abcmart.shoestore.testutil.OrderTestDomainFactory.createOrderBy;
+import static com.abcmart.shoestore.testutil.OrderTestDomainFactory.createOrderDetail;
+import static com.abcmart.shoestore.testutil.ShoeTestDomainFactory.createShoeByShoeCode;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -21,12 +26,8 @@ import com.abcmart.shoestore.repository.ShoeRepository;
 import com.abcmart.shoestore.tool.CreditCardType;
 import com.abcmart.shoestore.tool.OrderStatus;
 import com.abcmart.shoestore.tool.PaymentType;
-import com.navercorp.fixturemonkey.FixtureMonkey;
-import com.navercorp.fixturemonkey.api.introspector.FieldReflectionArbitraryIntrospector;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,27 +47,19 @@ class OrderServiceTest {
     @InjectMocks
     private OrderService orderService;
 
-    private static final FixtureMonkey fixtureMonkey = FixtureMonkey.builder()
-        .objectIntrospector(FieldReflectionArbitraryIntrospector.INSTANCE)
-        .build();
+    static final Long orderNo1 = 1L;
+    static final Long orderNo2 = 2L;
+    static final Long orderNo3 = 3L;
 
-    private static Shoe createShoeByShoeCode(Long shoeCode) {
-
-        return fixtureMonkey.giveMeBuilder(Shoe.class)
-            .set("shoeCode", shoeCode)
-            .setNotNull("price")
-            .sample();
-    }
+    static final Long shoeCode1 = 1L;
+    static final Long shoeCode2 = 2L;
+    static final Long shoeCode3 = 3L;
 
     @Test
     @DisplayName("정상적으로 유효한 주문이 생성되고 현금 결제가 되었는지 확인한다.")
     void createOrderWithOnlyCash() {
 
         // given
-        Long shoeCode1 = 1L;
-        Long shoeCode2 = 2L;
-        Long shoeCode3 = 3L;
-
         Shoe shoe1 = createShoeByShoeCode(shoeCode1);
         Shoe shoe2 = createShoeByShoeCode(shoeCode2);
         Shoe shoe3 = createShoeByShoeCode(shoeCode3);
@@ -136,10 +129,6 @@ class OrderServiceTest {
     void createOrderWithOnlyCreditCard() {
 
         // given
-        Long shoeCode1 = 1L;
-        Long shoeCode2 = 2L;
-        Long shoeCode3 = 3L;
-
         Shoe shoe1 = createShoeByShoeCode(shoeCode1);
         Shoe shoe2 = createShoeByShoeCode(shoeCode2);
         Shoe shoe3 = createShoeByShoeCode(shoeCode3);
@@ -209,10 +198,6 @@ class OrderServiceTest {
     void createOrderWithCashAndCreditCard() {
 
         // given
-        Long shoeCode1 = 1L;
-        Long shoeCode2 = 2L;
-        Long shoeCode3 = 3L;
-
         Shoe shoe1 = createShoeByShoeCode(shoeCode1);
         Shoe shoe2 = createShoeByShoeCode(shoeCode2);
         Shoe shoe3 = createShoeByShoeCode(shoeCode3);
@@ -286,10 +271,9 @@ class OrderServiceTest {
     void cancelOrder() {
 
         // given
-        Order order = fixtureMonkey.giveMeBuilder(Order.class)
-            .set("orderNo", 1L)
-            .set("status", OrderStatus.NORMAL)
-            .sample();
+        OrderDetail orderDetail = createOrderDetail(shoeCode1, 5L);
+        List<OrderPayment> orderPayments = List.of(createCash(), createCreditCard());
+        Order order = createOrderBy(orderNo1, List.of(orderDetail), orderPayments);
 
         given(orderRepository.findByOrderNo(any())).willReturn(order);
         given(orderRepository.save(any(Order.class)))
@@ -297,7 +281,7 @@ class OrderServiceTest {
 
 
         // when
-        OrderDto orderDto = orderService.cancelOrder(1L);
+        OrderDto orderDto = orderService.cancelOrder(orderNo1);
 
 
         // then
@@ -309,29 +293,12 @@ class OrderServiceTest {
     void partialCancel() {
 
         // given
-        Long shoeCode1 = 1L;
-        OrderDetail orderDetail = fixtureMonkey.giveMeBuilder(OrderDetail.class)
-            .set("orderStatus", OrderStatus.NORMAL)
-            .set("shoeCode", shoeCode1)
-            .set("count", 5L)
-            .sample();
-
-        List<OrderPayment> orderPayments = List.of(
-            fixtureMonkey.giveMeBuilder(OrderPayment.class).setNotNull("id").sample(),
-            fixtureMonkey.giveMeBuilder(OrderPayment.class).setNotNull("id").sample()
-        );
-
-        Long orderNo = 1L;
-        Order order = fixtureMonkey.giveMeBuilder(Order.class)
-            .set("orderNo", orderNo)
-            .set("status", OrderStatus.NORMAL)
-            .set("details", List.of(orderDetail))
-            .set("orderPayments", orderPayments.stream()
-                .collect(Collectors.toMap(OrderPayment::getId, Function.identity()))
-            )
-            .sample();
-
         Shoe shoe1 = createShoeByShoeCode(shoeCode1);
+
+        OrderDetail orderDetail = createOrderDetail(shoeCode1, 5L);
+        List<OrderPayment> orderPayments = List.of(createCash(), createCreditCard());
+        Order order = createOrderBy(orderNo1, List.of(orderDetail), orderPayments);
+
 
         given(shoeRepository.findByShoeCode(anyLong())).willReturn(shoe1);
         given(orderRepository.findByOrderNo(any())).willReturn(order);
@@ -341,7 +308,7 @@ class OrderServiceTest {
 
         // when
         long removeCount = 1L;
-        OrderDto orderDto = orderService.partialCancel(orderNo, shoeCode1, removeCount);
+        OrderDto orderDto = orderService.partialCancel(orderNo1, shoeCode1, removeCount);
 
 
         // then
@@ -358,29 +325,11 @@ class OrderServiceTest {
     void totalCancelWithPartialCancel() {
 
         // given
-        Long shoeCode1 = 1L;
-        OrderDetail orderDetail = fixtureMonkey.giveMeBuilder(OrderDetail.class)
-            .set("orderStatus", OrderStatus.NORMAL)
-            .set("shoeCode", shoeCode1)
-            .set("count", 5L)
-            .sample();
-
-        List<OrderPayment> orderPayments = List.of(
-            fixtureMonkey.giveMeBuilder(OrderPayment.class).setNotNull("id").sample(),
-            fixtureMonkey.giveMeBuilder(OrderPayment.class).setNotNull("id").sample()
-        );
-
-        Long orderNo = 1L;
-        Order order = fixtureMonkey.giveMeBuilder(Order.class)
-            .set("orderNo", orderNo)
-            .set("status", OrderStatus.NORMAL)
-            .set("details", List.of(orderDetail))
-            .set("orderPayments", orderPayments.stream()
-                .collect(Collectors.toMap(OrderPayment::getId, Function.identity()))
-            )
-            .sample();
-
         Shoe shoe1 = createShoeByShoeCode(shoeCode1);
+
+        OrderDetail orderDetail = createOrderDetail(shoeCode1, 5L);
+        List<OrderPayment> orderPayments = List.of(createCash(), createCreditCard());
+        Order order = createOrderBy(orderNo1, List.of(orderDetail), orderPayments);
 
         given(shoeRepository.findByShoeCode(anyLong())).willReturn(shoe1);
         given(orderRepository.findByOrderNo(any())).willReturn(order);
@@ -390,7 +339,7 @@ class OrderServiceTest {
 
         // when
         long removeCount = 5L;
-        OrderDto orderDto = orderService.partialCancel(orderNo, shoeCode1, removeCount);
+        OrderDto orderDto = orderService.partialCancel(orderNo1, shoeCode1, removeCount);
 
 
         // then
