@@ -1,5 +1,8 @@
 package com.abcmart.shoestore.application;
 
+import static com.abcmart.shoestore.testutil.OrderPaymentTestDomainFactory.createCreditCard;
+import static com.abcmart.shoestore.testutil.OrderTestDomainFactory.createOrderDetail;
+import static com.abcmart.shoestore.testutil.ShoeTestDomainFactory.createShoeBy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
@@ -8,16 +11,12 @@ import com.abcmart.shoestore.application.response.ShoeSaleAmountResponse;
 import com.abcmart.shoestore.application.response.ShoeSaleAmountResponse.CreditCardSaleAmountResponse;
 import com.abcmart.shoestore.application.response.ShoeSaleCountResponse;
 import com.abcmart.shoestore.application.response.ShoeSaleCountResponse.SoldShoe;
+import com.abcmart.shoestore.domain.CardPayment;
 import com.abcmart.shoestore.domain.OrderDetail;
-import com.abcmart.shoestore.domain.OrderPayment;
 import com.abcmart.shoestore.domain.Shoe;
 import com.abcmart.shoestore.repository.OrderRepository;
 import com.abcmart.shoestore.repository.ShoeRepository;
 import com.abcmart.shoestore.tool.CreditCardType;
-import com.abcmart.shoestore.tool.OrderStatus;
-import com.abcmart.shoestore.tool.PaymentType;
-import com.navercorp.fixturemonkey.FixtureMonkey;
-import com.navercorp.fixturemonkey.api.introspector.FieldReflectionArbitraryIntrospector;
 import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -39,53 +38,28 @@ class AdminServiceTest {
     @InjectMocks
     private AdminService adminService;
 
-    private static final FixtureMonkey fixtureMonkey = FixtureMonkey.builder()
-        .objectIntrospector(FieldReflectionArbitraryIntrospector.INSTANCE)
-        .build();
+    static final Long shoeCode1 = 1L;
+    static final Long shoeCode2 = 2L;
+    static final Long shoeCode3 = 3L;
 
     @Test
     @DisplayName("신발 상품 별 판매 수량이 정상적으로 조회되는지 확인한다.")
     void getShoeSaleCount() {
 
         // given
-        Long shoeCode1 = 1L;
-        Long shoeCode2 = 2L;
-        Long shoeCode3 = 3L;
-
-        Shoe shoe1 = fixtureMonkey.giveMeBuilder(Shoe.class)
-            .set("shoeCode", shoeCode1)
-            .set("price", BigDecimal.valueOf(50_000))
-            .sample();
-        Shoe shoe2 = fixtureMonkey.giveMeBuilder(Shoe.class)
-            .set("shoeCode", shoeCode2)
-            .set("price", BigDecimal.valueOf(100_000))
-            .sample();
-        Shoe shoe3 = fixtureMonkey.giveMeBuilder(Shoe.class)
-            .set("shoeCode", shoeCode3)
-            .set("price", BigDecimal.valueOf(70_000))
-            .sample();
+        Shoe shoe1 = createShoeBy(shoeCode1, BigDecimal.valueOf(50_000));
+        Shoe shoe2 = createShoeBy(shoeCode2, BigDecimal.valueOf(100_000));
+        Shoe shoe3 = createShoeBy(shoeCode3, BigDecimal.valueOf(70_000));
         List<Shoe> shoeEntities = List.of(shoe1, shoe2, shoe3);
 
         given(shoeRepository.findAllByShoeCodes(anyList())).willReturn(shoeEntities);
 
         long shoe1SaleCount = 2L;
-        OrderDetail orderDetail1 = fixtureMonkey.giveMeBuilder(OrderDetail.class)
-            .set("orderStatus", OrderStatus.NORMAL)
-            .set("shoeCode", shoeCode1)
-            .set("count", shoe1SaleCount)
-            .sample();
         long shoe2SaleCount = 3L;
-        OrderDetail orderDetail2 = fixtureMonkey.giveMeBuilder(OrderDetail.class)
-            .set("orderStatus", OrderStatus.NORMAL)
-            .set("shoeCode", shoeCode2)
-            .set("count", shoe2SaleCount)
-            .sample();
         long shoe3SaleCount = 5L;
-        OrderDetail orderDetail3 = fixtureMonkey.giveMeBuilder(OrderDetail.class)
-            .set("orderStatus", OrderStatus.NORMAL)
-            .set("shoeCode", shoeCode3)
-            .set("count", shoe3SaleCount)
-            .sample();
+        OrderDetail orderDetail1 = createOrderDetail(shoeCode1, shoe1SaleCount);
+        OrderDetail orderDetail2 = createOrderDetail(shoeCode2, shoe2SaleCount);
+        OrderDetail orderDetail3 = createOrderDetail(shoeCode3, shoe3SaleCount);
         List<OrderDetail> orderDetailList = List.of(
             orderDetail1, orderDetail2, orderDetail3
         );
@@ -128,11 +102,11 @@ class AdminServiceTest {
     void getShoeSaleAmountByCreditCardType() {
 
         // given
-        OrderPayment orderPayment1 = createOrderPaymentWithCreditCard();
-        OrderPayment orderPayment2 = createOrderPaymentWithCreditCard();
-        OrderPayment orderPayment3 = createOrderPaymentWithCreditCard();
-        List<OrderPayment> orderPaymentList = List.of(orderPayment1, orderPayment2, orderPayment3);
-        given(orderRepository.findAllCreditCardOrderPayments()).willReturn(orderPaymentList);
+        CardPayment cardPayment1 = (CardPayment) createCreditCard();
+        CardPayment cardPayment2 = (CardPayment) createCreditCard();
+        CardPayment cardPayment3 = (CardPayment) createCreditCard();
+        List<CardPayment> cardPaymentList = List.of(cardPayment1, cardPayment2, cardPayment3);
+        given(orderRepository.findAllCreditCardOrderPayments()).willReturn(cardPaymentList);
 
 
         // when
@@ -140,22 +114,13 @@ class AdminServiceTest {
 
 
         // then
-        List<CreditCardType> requestCreditCardTypeList = orderPaymentList.stream()
-            .map(OrderPayment::getCreditCardType)
+        List<CreditCardType> requestCreditCardTypeList = cardPaymentList.stream()
+            .map(CardPayment::getCreditCardType)
             .distinct()
             .toList();
         List<CreditCardType> creditCardTypeResultList = result.creditCardSaleAmounts().stream()
             .map(CreditCardSaleAmountResponse::creditCardType)
             .toList();
         assertThat(creditCardTypeResultList).contains(requestCreditCardTypeList.toArray(new CreditCardType[0]));
-    }
-
-    private static OrderPayment createOrderPaymentWithCreditCard() {
-
-        return fixtureMonkey.giveMeBuilder(OrderPayment.class)
-            .set("type", PaymentType.CREDIT_CARD)
-            .setNotNull("creditCardType")
-            .setNotNull("paidAmount")
-            .sample();
     }
 }
