@@ -52,7 +52,7 @@ public class Order {
 
         validateAvailableCancel();
 
-        this.orderPayments.values().forEach(payment -> payment.updatePaidAmountToZero());
+        this.orderPayments.values().forEach(OrderPayment::updatePaidAmountToZero);
         this.status = OrderStatus.CANCEL;
     }
 
@@ -60,10 +60,10 @@ public class Order {
 
         validateAvailableCancel();
 
-        Map<Long, OrderDetail> detailEntityMap = this.details.stream()
+        Map<Long, OrderDetail> detailMap = this.details.stream()
                 .collect(Collectors.toMap(OrderDetail::getShoeCode, Function.identity()));
 
-        OrderDetail orderDetail = detailEntityMap.get(shoe.getShoeCode());
+        OrderDetail orderDetail = detailMap.get(shoe.getShoeCode());
         if (Objects.isNull(orderDetail)) {
             throw new IllegalArgumentException("ShoeCode not found in order details");
         }

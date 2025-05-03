@@ -1,5 +1,6 @@
 package com.abcmart.shoestore.dto;
 
+import com.abcmart.shoestore.domain.CardPayment;
 import com.abcmart.shoestore.domain.OrderPayment;
 import com.abcmart.shoestore.tool.CreditCardType;
 import com.abcmart.shoestore.tool.PaymentType;
@@ -27,10 +28,13 @@ public class OrderPaymentDto {
 
     public static OrderPaymentDto from (OrderPayment orderPayment) {
 
+        CreditCardType creditCardType = null;
+        if (orderPayment instanceof CardPayment) {
+            creditCardType = ((CardPayment) orderPayment).getCreditCardType();
+        }
+
         return new OrderPaymentDto(
-            orderPayment.getType(),
-            orderPayment.getCreditCardType(),
-            orderPayment.getPaidAmount()
+            orderPayment.getType(), creditCardType, orderPayment.getPaidAmount()
         );
     }
 }

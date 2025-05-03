@@ -1,6 +1,8 @@
 package com.abcmart.shoestore.application;
 
 import com.abcmart.shoestore.application.request.CreateOrderRequest;
+import com.abcmart.shoestore.domain.CardPayment;
+import com.abcmart.shoestore.domain.CashPayment;
 import com.abcmart.shoestore.domain.Order;
 import com.abcmart.shoestore.domain.OrderDetail;
 import com.abcmart.shoestore.domain.OrderPayment;
@@ -46,9 +48,9 @@ public class OrderService {
         List<OrderPayment> orderPayments = request.getPayments().stream()
             .map(paymentRequest -> {
                 if (paymentRequest.getPaymentType().isCash()) {
-                    return OrderPayment.payInCash(paymentRequest.getPaidAmount());
+                    return CashPayment.payInCash(paymentRequest.getPaidAmount());
                 }
-                return OrderPayment.payInCreditCard(paymentRequest.getCreditCardType(),
+                return CardPayment.payInCreditCard(paymentRequest.getCreditCardType(),
                     paymentRequest.getPaidAmount());
             })
             .toList();

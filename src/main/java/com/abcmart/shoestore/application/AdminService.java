@@ -5,7 +5,7 @@ import com.abcmart.shoestore.application.response.ShoeSaleAmountResponse.CreditC
 import com.abcmart.shoestore.application.response.ShoeSaleCountResponse;
 import com.abcmart.shoestore.application.response.ShoeSaleCountResponse.SoldShoe;
 import com.abcmart.shoestore.domain.OrderDetail;
-import com.abcmart.shoestore.domain.OrderPayment;
+import com.abcmart.shoestore.domain.CardPayment;
 import com.abcmart.shoestore.domain.Shoe;
 import com.abcmart.shoestore.dto.ShoeDto;
 import com.abcmart.shoestore.repository.OrderRepository;
@@ -62,18 +62,18 @@ public class AdminService {
     @Transactional(readOnly = true)
     public ShoeSaleAmountResponse getShoeSaleAmountByCreditCardType() {
 
-        List<OrderPayment> creditCardOrderPayments = orderRepository.findAllCreditCardOrderPayments();
+        List<CardPayment> creditCardCardPayments = orderRepository.findAllCreditCardOrderPayments();
 
-        Map<CreditCardType, List<OrderPayment>> creditCardGrouping = creditCardOrderPayments.stream()
+        Map<CreditCardType, List<CardPayment>> creditCardGrouping = creditCardCardPayments.stream()
             .filter(orderPayment -> Objects.nonNull(orderPayment.getCreditCardType()))
-            .collect(Collectors.groupingBy(OrderPayment::getCreditCardType));
+            .collect(Collectors.groupingBy(CardPayment::getCreditCardType));
 
         List<CreditCardSaleAmountResponse> creditCardSaleAmounts = new ArrayList<>();
         for (CreditCardType creditCardType : creditCardGrouping.keySet()) {
 
-            List<OrderPayment> orderPayments = creditCardGrouping.get(creditCardType);
-            BigDecimal addedAmount = orderPayments.stream()
-                .map(OrderPayment::getPaidAmount)
+            List<CardPayment> cardPayments = creditCardGrouping.get(creditCardType);
+            BigDecimal addedAmount = cardPayments.stream()
+                .map(CardPayment::getPaidAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             creditCardSaleAmounts.add(CreditCardSaleAmountResponse.of(creditCardType, addedAmount));
