@@ -18,4 +18,15 @@ public class ShoeTestDomainFactory extends TestDomainFactory<Shoe> {
             .set("price", Arbitraries.bigDecimals().greaterThan(BigDecimal.ZERO))
             .sample();
     }
+
+    public static Shoe createShoeBy(Long shoeCode, BigDecimal price) {
+
+        return fixtureMonkey.giveMeBuilder(Shoe.class)
+            .set("shoeCode", shoeCode)
+            .setNotNull("shoeName")
+            .setNotNull("color")
+            .set("size", Arbitraries.integers().between(240, 300))
+            .set("price", price)
+            .sample();
+    }
 }

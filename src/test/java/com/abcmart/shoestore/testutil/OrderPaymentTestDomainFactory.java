@@ -24,6 +24,7 @@ public class OrderPaymentTestDomainFactory extends TestDomainFactory<OrderPaymen
         return fixtureMonkey.giveMeBuilder(CardPayment.class)
             .set("id", UUID.randomUUID().toString())
             .set("type", PaymentType.CREDIT_CARD)
+            .setNotNull("creditCardType")
             .set("paidAmount", Arbitraries.bigDecimals().greaterThan(BigDecimal.ZERO))
             .sample();
     }
