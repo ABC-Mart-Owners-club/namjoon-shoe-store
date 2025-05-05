@@ -1,7 +1,7 @@
 package com.abcmart.shoestore.application;
 
-import static com.abcmart.shoestore.testutil.PaymentTestDomainFactory.createCreditCard;
 import static com.abcmart.shoestore.testutil.OrderTestDomainFactory.createOrderDetail;
+import static com.abcmart.shoestore.testutil.PaymentTestDomainFactory.createCreditCard;
 import static com.abcmart.shoestore.testutil.ShoeTestDomainFactory.createShoeBy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -15,6 +15,7 @@ import com.abcmart.shoestore.domain.CardPayment;
 import com.abcmart.shoestore.domain.OrderDetail;
 import com.abcmart.shoestore.domain.Shoe;
 import com.abcmart.shoestore.repository.OrderRepository;
+import com.abcmart.shoestore.repository.PaymentRepository;
 import com.abcmart.shoestore.repository.ShoeRepository;
 import com.abcmart.shoestore.tool.CreditCardType;
 import java.math.BigDecimal;
@@ -34,6 +35,9 @@ class AdminServiceTest {
 
     @Mock
     private OrderRepository orderRepository;
+
+    @Mock
+    private PaymentRepository paymentRepository;
 
     @InjectMocks
     private AdminService adminService;
@@ -106,7 +110,7 @@ class AdminServiceTest {
         CardPayment cardPayment2 = (CardPayment) createCreditCard();
         CardPayment cardPayment3 = (CardPayment) createCreditCard();
         List<CardPayment> cardPaymentList = List.of(cardPayment1, cardPayment2, cardPayment3);
-        given(orderRepository.findAllCreditCardPayments()).willReturn(cardPaymentList);
+        given(paymentRepository.findAllCreditCardPayments()).willReturn(cardPaymentList);
 
 
         // when

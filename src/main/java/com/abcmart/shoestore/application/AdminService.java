@@ -4,11 +4,12 @@ import com.abcmart.shoestore.application.response.ShoeSaleAmountResponse;
 import com.abcmart.shoestore.application.response.ShoeSaleAmountResponse.CreditCardSaleAmountResponse;
 import com.abcmart.shoestore.application.response.ShoeSaleCountResponse;
 import com.abcmart.shoestore.application.response.ShoeSaleCountResponse.SoldShoe;
-import com.abcmart.shoestore.domain.OrderDetail;
 import com.abcmart.shoestore.domain.CardPayment;
+import com.abcmart.shoestore.domain.OrderDetail;
 import com.abcmart.shoestore.domain.Shoe;
 import com.abcmart.shoestore.dto.ShoeDto;
 import com.abcmart.shoestore.repository.OrderRepository;
+import com.abcmart.shoestore.repository.PaymentRepository;
 import com.abcmart.shoestore.repository.ShoeRepository;
 import com.abcmart.shoestore.tool.CreditCardType;
 import java.math.BigDecimal;
@@ -29,6 +30,7 @@ public class AdminService {
 
     private final OrderRepository orderRepository;
     private final ShoeRepository shoeRepository;
+    private final PaymentRepository paymentRepository;
 
     @Transactional(readOnly = true)
     public ShoeSaleCountResponse getShoeSaleCount() {
@@ -62,7 +64,7 @@ public class AdminService {
     @Transactional(readOnly = true)
     public ShoeSaleAmountResponse getShoeSaleAmountByCreditCardType() {
 
-        List<CardPayment> creditCardCardPayments = orderRepository.findAllCreditCardPayments();
+        List<CardPayment> creditCardCardPayments = paymentRepository.findAllCreditCardPayments();
 
         Map<CreditCardType, List<CardPayment>> creditCardGrouping = creditCardCardPayments.stream()
             .filter(payment -> Objects.nonNull(payment.getCreditCardType()))
