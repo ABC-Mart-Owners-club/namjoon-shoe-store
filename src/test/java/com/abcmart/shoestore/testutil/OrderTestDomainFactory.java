@@ -1,9 +1,9 @@
 package com.abcmart.shoestore.testutil;
 
-import com.abcmart.shoestore.domain.Order;
-import com.abcmart.shoestore.domain.OrderDetail;
-import com.abcmart.shoestore.domain.Payment;
-import com.abcmart.shoestore.tool.OrderStatus;
+import com.abcmart.shoestore.order.domain.Order;
+import com.abcmart.shoestore.order.domain.OrderDetail;
+import com.abcmart.shoestore.payment.domain.Payment;
+import com.abcmart.shoestore.order.domain.OrderStatus;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;

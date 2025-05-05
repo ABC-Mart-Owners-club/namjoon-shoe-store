@@ -1,9 +1,9 @@
 package com.abcmart.shoestore.testutil;
 
-import com.abcmart.shoestore.domain.CardPayment;
-import com.abcmart.shoestore.domain.CashPayment;
-import com.abcmart.shoestore.domain.Payment;
-import com.abcmart.shoestore.tool.PaymentType;
+import com.abcmart.shoestore.payment.domain.CardPayment;
+import com.abcmart.shoestore.payment.domain.CashPayment;
+import com.abcmart.shoestore.payment.domain.Payment;
+import com.abcmart.shoestore.payment.domain.PaymentType;
 import java.math.BigDecimal;
 import java.util.UUID;
 import net.jqwik.api.Arbitraries;

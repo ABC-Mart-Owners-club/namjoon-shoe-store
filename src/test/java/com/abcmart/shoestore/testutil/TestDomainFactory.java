@@ -1,8 +1,8 @@
 package com.abcmart.shoestore.testutil;
 
-import com.abcmart.shoestore.domain.CardPayment;
-import com.abcmart.shoestore.domain.CashPayment;
-import com.abcmart.shoestore.domain.Payment;
+import com.abcmart.shoestore.payment.domain.CardPayment;
+import com.abcmart.shoestore.payment.domain.CashPayment;
+import com.abcmart.shoestore.payment.domain.Payment;
 import com.navercorp.fixturemonkey.FixtureMonkey;
 import com.navercorp.fixturemonkey.api.introspector.FieldReflectionArbitraryIntrospector;
 import com.navercorp.fixturemonkey.api.plugin.InterfacePlugin;
