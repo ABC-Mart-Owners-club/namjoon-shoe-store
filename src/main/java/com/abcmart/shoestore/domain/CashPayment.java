@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public class CashPayment extends OrderPayment {
+public class CashPayment extends Payment {
 
 
     private CashPayment(BigDecimal paidAmount) {

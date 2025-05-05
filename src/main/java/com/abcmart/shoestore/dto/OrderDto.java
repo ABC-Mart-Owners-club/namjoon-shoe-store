@@ -11,15 +11,15 @@ public class OrderDto {
     private final Long orderNo;
     private final OrderStatus status;
     private final List<OrderDetailDto> details;
-    private final List<OrderPaymentDto> orderPayments;
+    private final List<PaymentDto> payments;
 
     private OrderDto(Long orderNo, OrderStatus status, List<OrderDetailDto> details,
-        List<OrderPaymentDto> orderPayments) {
+        List<PaymentDto> payments) {
 
         this.orderNo = orderNo;
         this.status = status;
         this.details = details;
-        this.orderPayments = orderPayments;
+        this.payments = payments;
     }
 
     public static OrderDto from(Order order) {
@@ -28,7 +28,7 @@ public class OrderDto {
             order.getOrderNo(),
             order.getStatus(),
             order.getDetails().stream().map(OrderDetailDto::from).toList(),
-            order.getOrderPayments().values().stream().map(OrderPaymentDto::from).toList()
+            order.getPayments().values().stream().map(PaymentDto::from).toList()
         );
     }
 }

@@ -2,7 +2,7 @@ package com.abcmart.shoestore.testutil;
 
 import com.abcmart.shoestore.domain.Order;
 import com.abcmart.shoestore.domain.OrderDetail;
-import com.abcmart.shoestore.domain.OrderPayment;
+import com.abcmart.shoestore.domain.Payment;
 import com.abcmart.shoestore.tool.OrderStatus;
 import java.util.List;
 import java.util.Map;
@@ -19,16 +19,16 @@ public class OrderTestDomainFactory extends TestDomainFactory<Order> {
             .sample();
     }
 
-    public static Order createOrderBy(Long orderNo, List<OrderDetail> orderDetails, List<OrderPayment> orderPayments) {
+    public static Order createOrderBy(Long orderNo, List<OrderDetail> orderDetails, List<Payment> payments) {
 
-        Map<String, OrderPayment> orderPaymentMap = orderPayments.stream()
-            .collect(Collectors.toMap(OrderPayment::getId, Function.identity()));
+        Map<String, Payment> paymentMap = payments.stream()
+            .collect(Collectors.toMap(Payment::getId, Function.identity()));
 
         return fixtureMonkey.giveMeBuilder(Order.class)
             .set("orderNo", orderNo)
             .set("status", OrderStatus.NORMAL)
             .set("details", orderDetails)
-            .set("orderPayments", orderPaymentMap)
+            .set("payments", paymentMap)
             .sample();
     }
 

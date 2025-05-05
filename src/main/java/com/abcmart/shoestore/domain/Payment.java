@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public abstract class OrderPayment {
+public abstract class Payment {
 
     @Id
     private String id;
@@ -21,7 +21,7 @@ public abstract class OrderPayment {
     @NotNull
     private BigDecimal paidAmount;
 
-    protected OrderPayment(PaymentType type, BigDecimal paidAmount) {
+    protected Payment(PaymentType type, BigDecimal paidAmount) {
 
         this.id = UUID.randomUUID().toString();
         this.type = type;

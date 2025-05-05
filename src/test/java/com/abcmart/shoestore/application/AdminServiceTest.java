@@ -1,6 +1,6 @@
 package com.abcmart.shoestore.application;
 
-import static com.abcmart.shoestore.testutil.OrderPaymentTestDomainFactory.createCreditCard;
+import static com.abcmart.shoestore.testutil.PaymentTestDomainFactory.createCreditCard;
 import static com.abcmart.shoestore.testutil.OrderTestDomainFactory.createOrderDetail;
 import static com.abcmart.shoestore.testutil.ShoeTestDomainFactory.createShoeBy;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -106,7 +106,7 @@ class AdminServiceTest {
         CardPayment cardPayment2 = (CardPayment) createCreditCard();
         CardPayment cardPayment3 = (CardPayment) createCreditCard();
         List<CardPayment> cardPaymentList = List.of(cardPayment1, cardPayment2, cardPayment3);
-        given(orderRepository.findAllCreditCardOrderPayments()).willReturn(cardPaymentList);
+        given(orderRepository.findAllCreditCardPayments()).willReturn(cardPaymentList);
 
 
         // when

@@ -13,7 +13,7 @@ import lombok.RequiredArgsConstructor;
 public class CreateOrderRequest {
 
     private final List<CreateOrderDetailRequest> orderDetails;
-    private final List<CreateOrderPaymentRequest> payments;
+    private final List<CreatePaymentRequest> payments;
 
     @Getter
     @RequiredArgsConstructor
@@ -25,7 +25,7 @@ public class CreateOrderRequest {
 
     @Getter
     @RequiredArgsConstructor
-    public static class CreateOrderPaymentRequest {
+    public static class CreatePaymentRequest {
 
         private final PaymentType paymentType;
         private final CreditCardType creditCardType;

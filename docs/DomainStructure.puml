@@ -21,7 +21,7 @@ Long orderNo
 OrderStatus status
 List<OrderDetail> details
 BigDecimal totalAmount
-Map<String, OrderPayment> orderPayments
+Map<String, Payment> payments
 + _create()
 + totalCancel()
 + partialCancel()
@@ -40,7 +40,7 @@ Long count
 + isCancel()
 }
 
-abstract class OrderPayment {
+abstract class Payment {
 String id
 PaymentType type
 BigDecimal paidAmount
@@ -77,8 +77,8 @@ BC
 
 
 Order <-- OrderDetail
-Order <-- OrderPayment
-OrderPayment <-- CashPayment
-OrderPayment <-- CardPayment
+Order <-- Payment
+Payment <-- CashPayment
+Payment <-- CardPayment
 
 @enduml

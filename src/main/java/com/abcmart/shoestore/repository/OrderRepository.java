@@ -15,5 +15,5 @@ public interface OrderRepository {
 
     List<OrderDetail> findAllNormalStatusOrderDetails();
 
-    List<CardPayment> findAllCreditCardOrderPayments();
+    List<CardPayment> findAllCreditCardPayments();
 }

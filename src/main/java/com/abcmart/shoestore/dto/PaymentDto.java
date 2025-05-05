@@ -1,7 +1,7 @@
 package com.abcmart.shoestore.dto;
 
 import com.abcmart.shoestore.domain.CardPayment;
-import com.abcmart.shoestore.domain.OrderPayment;
+import com.abcmart.shoestore.domain.Payment;
 import com.abcmart.shoestore.tool.CreditCardType;
 import com.abcmart.shoestore.tool.PaymentType;
 import jakarta.annotation.Nullable;
@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 import lombok.Getter;
 
 @Getter
-public class OrderPaymentDto {
+public class PaymentDto {
 
     private final PaymentType paymentType;
 
@@ -18,7 +18,7 @@ public class OrderPaymentDto {
 
     private final BigDecimal paidAmount;
 
-    private OrderPaymentDto(PaymentType paymentType, @Nullable CreditCardType creditCardType,
+    private PaymentDto(PaymentType paymentType, @Nullable CreditCardType creditCardType,
         BigDecimal paidAmount) {
 
         this.paymentType = paymentType;
@@ -26,15 +26,15 @@ public class OrderPaymentDto {
         this.paidAmount = paidAmount;
     }
 
-    public static OrderPaymentDto from (OrderPayment orderPayment) {
+    public static PaymentDto from (Payment payment) {
 
         CreditCardType creditCardType = null;
-        if (orderPayment instanceof CardPayment) {
-            creditCardType = ((CardPayment) orderPayment).getCreditCardType();
+        if (payment instanceof CardPayment) {
+            creditCardType = ((CardPayment) payment).getCreditCardType();
         }
 
-        return new OrderPaymentDto(
-            orderPayment.getType(), creditCardType, orderPayment.getPaidAmount()
+        return new PaymentDto(
+            payment.getType(), creditCardType, payment.getPaidAmount()
         );
     }
 }

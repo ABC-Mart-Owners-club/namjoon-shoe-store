@@ -5,7 +5,7 @@ import com.abcmart.shoestore.domain.CardPayment;
 import com.abcmart.shoestore.domain.CashPayment;
 import com.abcmart.shoestore.domain.Order;
 import com.abcmart.shoestore.domain.OrderDetail;
-import com.abcmart.shoestore.domain.OrderPayment;
+import com.abcmart.shoestore.domain.Payment;
 import com.abcmart.shoestore.domain.Shoe;
 import com.abcmart.shoestore.dto.OrderDto;
 import com.abcmart.shoestore.repository.OrderRepository;
@@ -45,7 +45,7 @@ public class OrderService {
         BigDecimal totalPrice = calculateTotalPrice(shoeMap, request.getOrderDetails());
 
         // 결제 방식 생성
-        List<OrderPayment> orderPayments = request.getPayments().stream()
+        List<Payment> payments = request.getPayments().stream()
             .map(paymentRequest -> {
                 if (paymentRequest.getPaymentType().isCash()) {
                     return CashPayment.payInCash(paymentRequest.getPaidAmount());
@@ -56,7 +56,7 @@ public class OrderService {
             .toList();
 
         // 주문 생성 및 저장
-        Order order = Order.create(details, totalPrice, orderPayments);
+        Order order = Order.create(details, totalPrice, payments);
         Order savedOrder = orderRepository.save(order);
 
         return OrderDto.from(savedOrder);

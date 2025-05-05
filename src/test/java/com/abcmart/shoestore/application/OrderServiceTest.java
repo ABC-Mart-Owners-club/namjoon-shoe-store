@@ -1,7 +1,7 @@
 package com.abcmart.shoestore.application;
 
-import static com.abcmart.shoestore.testutil.OrderPaymentTestDomainFactory.createCash;
-import static com.abcmart.shoestore.testutil.OrderPaymentTestDomainFactory.createCreditCard;
+import static com.abcmart.shoestore.testutil.PaymentTestDomainFactory.createCash;
+import static com.abcmart.shoestore.testutil.PaymentTestDomainFactory.createCreditCard;
 import static com.abcmart.shoestore.testutil.OrderTestDomainFactory.createOrderBy;
 import static com.abcmart.shoestore.testutil.OrderTestDomainFactory.createOrderDetail;
 import static com.abcmart.shoestore.testutil.ShoeTestDomainFactory.createShoeByShoeCode;
@@ -13,14 +13,14 @@ import static org.mockito.BDDMockito.given;
 
 import com.abcmart.shoestore.application.request.CreateOrderRequest;
 import com.abcmart.shoestore.application.request.CreateOrderRequest.CreateOrderDetailRequest;
-import com.abcmart.shoestore.application.request.CreateOrderRequest.CreateOrderPaymentRequest;
+import com.abcmart.shoestore.application.request.CreateOrderRequest.CreatePaymentRequest;
 import com.abcmart.shoestore.domain.Order;
 import com.abcmart.shoestore.domain.OrderDetail;
-import com.abcmart.shoestore.domain.OrderPayment;
+import com.abcmart.shoestore.domain.Payment;
 import com.abcmart.shoestore.domain.Shoe;
 import com.abcmart.shoestore.dto.OrderDetailDto;
 import com.abcmart.shoestore.dto.OrderDto;
-import com.abcmart.shoestore.dto.OrderPaymentDto;
+import com.abcmart.shoestore.dto.PaymentDto;
 import com.abcmart.shoestore.repository.OrderRepository;
 import com.abcmart.shoestore.repository.ShoeRepository;
 import com.abcmart.shoestore.tool.CreditCardType;
@@ -81,16 +81,16 @@ class OrderServiceTest {
             new CreateOrderDetailRequest(shoeCode3, countOfShoeCode3)
         );
         BigDecimal totalPrice = shoe1.getPrice().add(shoe2.getPrice()).add(shoe3.getPrice());
-        List<CreateOrderPaymentRequest> orderPaymentRequests = List.of(
-            new CreateOrderPaymentRequest(PaymentType.CASH, null, totalPrice));
-        CreateOrderRequest request = new CreateOrderRequest(orderDetailRequests, orderPaymentRequests);
+        List<CreatePaymentRequest> paymentRequests = List.of(
+            new CreatePaymentRequest(PaymentType.CASH, null, totalPrice));
+        CreateOrderRequest request = new CreateOrderRequest(orderDetailRequests, paymentRequests);
 
         OrderDto result = orderService.createOrder(request);
 
 
         // then
-        List<PaymentType> paymentTypeList = result.getOrderPayments().stream()
-            .map(OrderPaymentDto::getPaymentType)
+        List<PaymentType> paymentTypeList = result.getPayments().stream()
+            .map(PaymentDto::getPaymentType)
             .toList();
         assertThat(paymentTypeList).contains(PaymentType.CASH);
         assertThat(result.getStatus()).isEqualTo(OrderStatus.NORMAL);
@@ -150,16 +150,16 @@ class OrderServiceTest {
             new CreateOrderDetailRequest(shoeCode3, countOfShoeCode3)
         );
         BigDecimal totalPrice = shoe1.getPrice().add(shoe2.getPrice()).add(shoe3.getPrice());
-        List<CreateOrderPaymentRequest> orderPaymentRequests = List.of(
-            new CreateOrderPaymentRequest(PaymentType.CREDIT_CARD, CreditCardType.HYUNDAI, totalPrice));
-        CreateOrderRequest request = new CreateOrderRequest(orderDetailRequests, orderPaymentRequests);
+        List<CreatePaymentRequest> paymentRequests = List.of(
+            new CreatePaymentRequest(PaymentType.CREDIT_CARD, CreditCardType.HYUNDAI, totalPrice));
+        CreateOrderRequest request = new CreateOrderRequest(orderDetailRequests, paymentRequests);
 
         OrderDto result = orderService.createOrder(request);
 
 
         // then
-        List<PaymentType> paymentTypeList = result.getOrderPayments().stream()
-            .map(OrderPaymentDto::getPaymentType)
+        List<PaymentType> paymentTypeList = result.getPayments().stream()
+            .map(PaymentDto::getPaymentType)
             .toList();
         assertThat(paymentTypeList).contains(PaymentType.CREDIT_CARD);
         assertThat(result.getStatus()).isEqualTo(OrderStatus.NORMAL);
@@ -221,18 +221,18 @@ class OrderServiceTest {
         BigDecimal totalPrice = shoe1.getPrice().add(shoe2.getPrice()).add(shoe3.getPrice());
         BigDecimal firstPaymentPrice = totalPrice.divide(BigDecimal.TWO, BigDecimal.ROUND_HALF_UP);
         BigDecimal secondPaymentPrice = totalPrice.subtract(firstPaymentPrice);
-        List<CreateOrderPaymentRequest> orderPaymentRequests = List.of(
-            new CreateOrderPaymentRequest(PaymentType.CASH, null, firstPaymentPrice),
-            new CreateOrderPaymentRequest(PaymentType.CREDIT_CARD, CreditCardType.HYUNDAI, secondPaymentPrice)
+        List<CreatePaymentRequest> paymentRequests = List.of(
+            new CreatePaymentRequest(PaymentType.CASH, null, firstPaymentPrice),
+            new CreatePaymentRequest(PaymentType.CREDIT_CARD, CreditCardType.HYUNDAI, secondPaymentPrice)
         );
-        CreateOrderRequest request = new CreateOrderRequest(orderDetailRequests, orderPaymentRequests);
+        CreateOrderRequest request = new CreateOrderRequest(orderDetailRequests, paymentRequests);
 
         OrderDto result = orderService.createOrder(request);
 
 
         // then
-        List<PaymentType> paymentTypeList = result.getOrderPayments().stream()
-            .map(OrderPaymentDto::getPaymentType)
+        List<PaymentType> paymentTypeList = result.getPayments().stream()
+            .map(PaymentDto::getPaymentType)
             .toList();
         assertThat(paymentTypeList).contains(PaymentType.CASH, PaymentType.CREDIT_CARD);
         assertThat(result.getStatus()).isEqualTo(OrderStatus.NORMAL);
@@ -272,8 +272,8 @@ class OrderServiceTest {
 
         // given
         OrderDetail orderDetail = createOrderDetail(shoeCode1, 5L);
-        List<OrderPayment> orderPayments = List.of(createCash(), createCreditCard());
-        Order order = createOrderBy(orderNo1, List.of(orderDetail), orderPayments);
+        List<Payment> payments = List.of(createCash(), createCreditCard());
+        Order order = createOrderBy(orderNo1, List.of(orderDetail), payments);
 
         given(orderRepository.findByOrderNo(any())).willReturn(order);
         given(orderRepository.save(any(Order.class)))
@@ -296,8 +296,8 @@ class OrderServiceTest {
         Shoe shoe1 = createShoeByShoeCode(shoeCode1);
 
         OrderDetail orderDetail = createOrderDetail(shoeCode1, 5L);
-        List<OrderPayment> orderPayments = List.of(createCash(), createCreditCard());
-        Order order = createOrderBy(orderNo1, List.of(orderDetail), orderPayments);
+        List<Payment> payments = List.of(createCash(), createCreditCard());
+        Order order = createOrderBy(orderNo1, List.of(orderDetail), payments);
 
 
         given(shoeRepository.findByShoeCode(anyLong())).willReturn(shoe1);
@@ -328,8 +328,8 @@ class OrderServiceTest {
         Shoe shoe1 = createShoeByShoeCode(shoeCode1);
 
         OrderDetail orderDetail = createOrderDetail(shoeCode1, 5L);
-        List<OrderPayment> orderPayments = List.of(createCash(), createCreditCard());
-        Order order = createOrderBy(orderNo1, List.of(orderDetail), orderPayments);
+        List<Payment> payments = List.of(createCash(), createCreditCard());
+        Order order = createOrderBy(orderNo1, List.of(orderDetail), payments);
 
         given(shoeRepository.findByShoeCode(anyLong())).willReturn(shoe1);
         given(orderRepository.findByOrderNo(any())).willReturn(order);

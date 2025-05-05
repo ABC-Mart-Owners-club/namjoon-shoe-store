@@ -31,28 +31,28 @@ public class Order {
     private BigDecimal totalAmount;
 
     @NotEmpty
-    private Map<String, OrderPayment> orderPayments;
+    private Map<String, Payment> payments;
 
-    private Order(List<OrderDetail> details, BigDecimal totalAmount, List<OrderPayment> orderPayments) {
+    private Order(List<OrderDetail> details, BigDecimal totalAmount, List<Payment> payments) {
 
         this.status = OrderStatus.NORMAL;
         this.details = details;
         this.totalAmount = totalAmount;
-        this.orderPayments = orderPayments.stream()
-            .collect(Collectors.toMap(OrderPayment::getId, Function.identity()));
+        this.payments = payments.stream()
+            .collect(Collectors.toMap(Payment::getId, Function.identity()));
     }
 
     public static Order create(List<OrderDetail> detailEntities, BigDecimal totalAmount,
-        List<OrderPayment> orderPayments) {
+        List<Payment> payments) {
 
-        return new Order(detailEntities, totalAmount, orderPayments);
+        return new Order(detailEntities, totalAmount, payments);
     }
 
     public void totalCancel() {
 
         validateAvailableCancel();
 
-        this.orderPayments.values().forEach(OrderPayment::updatePaidAmountToZero);
+        this.payments.values().forEach(Payment::updatePaidAmountToZero);
         this.status = OrderStatus.CANCEL;
     }
 
@@ -74,27 +74,27 @@ public class Order {
         }
 
         BigDecimal totalCancelAmount = shoe.getPrice().multiply(BigDecimal.valueOf(removeCount));
-        Optional<OrderPayment> availablePayment = this.orderPayments.values().stream()
+        Optional<Payment> availablePayment = this.payments.values().stream()
             .filter(payment -> payment.validateAvailableCancel(totalCancelAmount))
             .findFirst();
         if (availablePayment.isPresent()) {
 
             String paymentId = availablePayment.get().getId();
-            Optional<OrderPayment> targetPayment = Optional.ofNullable(this.orderPayments.get(paymentId));
+            Optional<Payment> targetPayment = Optional.ofNullable(this.payments.get(paymentId));
             targetPayment.orElseThrow(
-                () -> new IllegalArgumentException("OrderPayment not found")
+                () -> new IllegalArgumentException("Payment not found")
             ).partialCancel(totalCancelAmount);
 
         } else {
 
             BigDecimal remainCancelAmount = totalCancelAmount;
-            List<OrderPayment> targetPayments = this.orderPayments.values().stream().toList();
-            for (OrderPayment orderPayment : targetPayments) {
-                BigDecimal canceledAmount = orderPayment.partialCancel(remainCancelAmount);
+            List<Payment> targetPayments = this.payments.values().stream().toList();
+            for (Payment payment : targetPayments) {
+                BigDecimal canceledAmount = payment.partialCancel(remainCancelAmount);
                 remainCancelAmount = remainCancelAmount.subtract(canceledAmount);
             }
-            this.orderPayments = targetPayments.stream()
-                .collect(Collectors.toMap(OrderPayment::getId, Function.identity()));
+            this.payments = targetPayments.stream()
+                .collect(Collectors.toMap(Payment::getId, Function.identity()));
         }
 
         return this;

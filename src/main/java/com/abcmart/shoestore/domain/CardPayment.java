@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public class CardPayment extends OrderPayment {
+public class CardPayment extends Payment {
 
     private CreditCardType creditCardType;
 

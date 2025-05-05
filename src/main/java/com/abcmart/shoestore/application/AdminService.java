@@ -62,10 +62,10 @@ public class AdminService {
     @Transactional(readOnly = true)
     public ShoeSaleAmountResponse getShoeSaleAmountByCreditCardType() {
 
-        List<CardPayment> creditCardCardPayments = orderRepository.findAllCreditCardOrderPayments();
+        List<CardPayment> creditCardCardPayments = orderRepository.findAllCreditCardPayments();
 
         Map<CreditCardType, List<CardPayment>> creditCardGrouping = creditCardCardPayments.stream()
-            .filter(orderPayment -> Objects.nonNull(orderPayment.getCreditCardType()))
+            .filter(payment -> Objects.nonNull(payment.getCreditCardType()))
             .collect(Collectors.groupingBy(CardPayment::getCreditCardType));
 
         List<CreditCardSaleAmountResponse> creditCardSaleAmounts = new ArrayList<>();
