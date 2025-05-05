@@ -8,6 +8,8 @@ import java.util.List;
 @Repository
 public interface ShoeRepository {
 
+    Shoe save(Shoe shoe);
+
     Shoe findByShoeCode(Long shoeCode);
 
     List<Shoe> findAllByShoeCodes(List<Long> shoeCodes);
