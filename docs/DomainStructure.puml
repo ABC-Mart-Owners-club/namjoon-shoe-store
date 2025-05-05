@@ -1,0 +1,84 @@
+@startuml
+
+
+
+class Shoe {
+Long shoeCode
+String shoeName
+String color
+int size
+BigDecimal price
++ _create()
+}
+
+enum OrderStatus {
+NORMAL
+CANCELLED
+}
+
+class Order {
+Long orderNo
+OrderStatus status
+List<OrderDetail> details
+BigDecimal totalAmount
+Map<String, OrderPayment> orderPayments
++ _create()
++ totalCancel()
++ partialCancel()
+- validateAvailableCancel()
+- validateAllCancelled()
+}
+
+class OrderDetail {
+Long orderDetailNo
+OrderStatus orderStatus
+Long shoeCode
+Long count
++ _create()
+# partialCancel()
++ isNormal()
++ isCancel()
+}
+
+abstract class OrderPayment {
+String id
+PaymentType type
+BigDecimal paidAmount
+# updatePaidAmount()
++ updatePaidAmountToZero()
++ validateAvailableCancel()
++ partialCancel()
+}
+
+class CashPayment {
++ _payInCash()
+}
+
+class CardPayment {
+CreditCardType creditCardType
++ _payInCreditCard()
+}
+
+enum PaymentType {
+CASH
+CREDIT_CARD
+}
+
+enum CreditCardType {
+SHINHAN
+SAMSUNG
+KB_KOOKMIN
+HYUNDAI
+LOTTE
+WOORI
+HANA
+BC
+}
+
+
+Order <-- OrderDetail
+Order <-- OrderPayment
+OrderPayment <-- CashPayment
+OrderPayment <-- CardPayment
+
+@enduml

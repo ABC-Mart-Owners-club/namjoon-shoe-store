@@ -1,45 +1,53 @@
 package com.abcmart.shoestore.domain;
 
 import com.abcmart.shoestore.tool.PaymentType;
+import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-
 import java.math.BigDecimal;
+import java.util.UUID;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public class OrderPayment {
+public abstract class OrderPayment {
+
+    @Id
+    private String id;
 
     @NotNull
     private PaymentType type;
 
     @NotNull
-    private BigDecimal totalAmount;
-
-    @NotNull
     private BigDecimal paidAmount;
 
-    @NotNull
-    private BigDecimal cancelledAmount;
+    protected OrderPayment(PaymentType type, BigDecimal paidAmount) {
 
-    private OrderPayment(PaymentType type, BigDecimal totalAmount) {
-
+        this.id = UUID.randomUUID().toString();
         this.type = type;
-        this.totalAmount = totalAmount;
-        this.paidAmount = totalAmount;
-        this.cancelledAmount = BigDecimal.ZERO;
+        this.paidAmount = paidAmount;
     }
 
-    public static OrderPayment payInCash(BigDecimal amount) {
+    protected BigDecimal updatePaidAmount(BigDecimal paidAmount) {
 
-        return new OrderPayment(PaymentType.CASH, amount);
+        this.paidAmount = paidAmount;
+        return paidAmount;
     }
 
-    public OrderPayment partialCancel(BigDecimal cancelledAmount) {
+    public void updatePaidAmountToZero() {
 
-        this.cancelledAmount = cancelledAmount;
-        this.paidAmount = this.totalAmount.subtract(cancelledAmount);
-        return this;
+        this.paidAmount = BigDecimal.ZERO;
+    }
+
+    public boolean validateAvailableCancel(BigDecimal cancelledAmount) {
+
+        return getPaidAmount().compareTo(cancelledAmount) >= 0;
+    }
+
+    public BigDecimal partialCancel(BigDecimal amountToCancel) {
+
+        BigDecimal cancelAmount = getPaidAmount().min(amountToCancel);
+        updatePaidAmount(getPaidAmount().subtract(cancelAmount));
+        return cancelAmount;
     }
 }
