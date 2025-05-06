@@ -8,14 +8,14 @@ import lombok.Getter;
 public class OrderDetailDto {
 
     private Long orderDetailNo;
-    private OrderStatus orderStatus;
+    private OrderStatus orderDetailStatus;
     private Long shoeCode;
     private Long count;
 
-    private OrderDetailDto(Long orderDetailNo, OrderStatus orderStatus, Long shoeCode, Long count) {
+    private OrderDetailDto(Long orderDetailNo, OrderStatus orderDetailStatus, Long shoeCode, Long count) {
 
         this.orderDetailNo = orderDetailNo;
-        this.orderStatus = orderStatus;
+        this.orderDetailStatus = orderDetailStatus;
         this.shoeCode = shoeCode;
         this.count = count;
     }
@@ -24,7 +24,7 @@ public class OrderDetailDto {
 
         return new OrderDetailDto(
             orderDetail.getOrderDetailNo(),
-            orderDetail.getOrderStatus(),
+            orderDetail.getOrderDetailStatus(),
             orderDetail.getShoeCode(),
             orderDetail.getCount()
         );

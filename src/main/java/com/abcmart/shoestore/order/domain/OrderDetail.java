@@ -14,7 +14,7 @@ public class OrderDetail {
     private Long orderDetailNo;
 
     @NotNull
-    private OrderStatus orderStatus;
+    private OrderStatus orderDetailStatus;
 
     @NotNull
     private Long shoeCode;
@@ -27,7 +27,7 @@ public class OrderDetail {
 
     private OrderDetail(Long shoeCode, BigDecimal unitPrice, Long count) {
 
-        this.orderStatus = OrderStatus.NORMAL;
+        this.orderDetailStatus = OrderStatus.NORMAL;
         this.shoeCode = shoeCode;
         this.unitPrice = unitPrice;
         this.count = count;
@@ -46,18 +46,18 @@ public class OrderDetail {
 
         this.count -= removeCount;
         if (this.count == 0) {
-            this.orderStatus = OrderStatus.CANCEL;
+            this.orderDetailStatus = OrderStatus.CANCEL;
         }
         return this;
     }
 
     public boolean isNormal() {
 
-        return this.orderStatus == OrderStatus.NORMAL;
+        return this.orderDetailStatus == OrderStatus.NORMAL;
     }
 
     public boolean isCancel() {
 
-        return this.orderStatus == OrderStatus.CANCEL;
+        return this.orderDetailStatus == OrderStatus.CANCEL;
     }
 }

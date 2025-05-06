@@ -318,7 +318,7 @@ class OrderServiceTest {
         OrderDetailDto orderDetailDto = orderDto.getDetails().stream()
             .filter(detail -> detail.getShoeCode().equals(shoeCode1)).findFirst().get();
         assertThat(orderDetailDto.getCount()).isEqualTo(orderDetail.getCount() - removeCount);
-        assertThat(orderDetailDto.getOrderStatus()).isEqualTo(OrderStatus.NORMAL);
+        assertThat(orderDetailDto.getOrderDetailStatus()).isEqualTo(OrderStatus.NORMAL);
     }
 
     @Test
@@ -349,6 +349,6 @@ class OrderServiceTest {
         OrderDetailDto orderDetailDto = orderDto.getDetails().stream()
             .filter(detail -> detail.getShoeCode().equals(shoeCode1)).findFirst().get();
         assertThat(orderDetailDto.getCount()).isEqualTo(orderDetail.getCount() - removeCount);
-        assertThat(orderDetailDto.getOrderStatus()).isEqualTo(OrderStatus.CANCEL);
+        assertThat(orderDetailDto.getOrderDetailStatus()).isEqualTo(OrderStatus.CANCEL);
     }
 }

@@ -35,7 +35,7 @@ public class OrderTestDomainFactory extends TestDomainFactory<Order> {
     public static OrderDetail createOrderDetail(Long shoeCode, Long count) {
 
         return fixtureMonkey.giveMeBuilder(OrderDetail.class)
-            .set("orderStatus", OrderStatus.NORMAL)
+            .set("orderDetailStatus", OrderStatus.NORMAL)
             .set("shoeCode", shoeCode)
             .set("count", count)
             .sample();

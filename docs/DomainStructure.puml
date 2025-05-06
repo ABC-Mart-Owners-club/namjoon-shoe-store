@@ -31,7 +31,7 @@ Map<String, Payment> payments
 
 class OrderDetail {
 Long orderDetailNo
-OrderStatus orderStatus
+OrderStatus orderDetailStatus
 Long shoeCode
 BigDecimal unitPrice
 Long count
