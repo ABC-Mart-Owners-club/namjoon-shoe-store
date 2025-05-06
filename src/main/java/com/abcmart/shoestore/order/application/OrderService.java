@@ -1,14 +1,14 @@
 package com.abcmart.shoestore.order.application;
 
 import com.abcmart.shoestore.order.application.request.CreateOrderRequest;
-import com.abcmart.shoestore.payment.domain.CardPayment;
-import com.abcmart.shoestore.payment.domain.CashPayment;
 import com.abcmart.shoestore.order.domain.Order;
 import com.abcmart.shoestore.order.domain.OrderDetail;
-import com.abcmart.shoestore.payment.domain.Payment;
-import com.abcmart.shoestore.shoe.domain.Shoe;
 import com.abcmart.shoestore.order.dto.OrderDto;
 import com.abcmart.shoestore.order.repository.OrderRepository;
+import com.abcmart.shoestore.payment.domain.CardPayment;
+import com.abcmart.shoestore.payment.domain.CashPayment;
+import com.abcmart.shoestore.payment.domain.Payment;
+import com.abcmart.shoestore.shoe.domain.Shoe;
 import com.abcmart.shoestore.shoe.repository.ShoeRepository;
 import java.math.BigDecimal;
 import java.util.List;
@@ -30,19 +30,26 @@ public class OrderService {
     @Transactional
     public OrderDto createOrder(CreateOrderRequest request) {
 
-        // 주문 항목 생성
-        List<OrderDetail> details = request.getOrderDetails().stream()
-            .map(orderDetail -> OrderDetail.create(orderDetail.getShoeCode(),
-                orderDetail.getCount()))
-            .toList();
-
-        // 신발들을 조회하여 전체 가격 계산
+        // 주문을 원하는 신발의 가격 조회
         List<Long> shoeCodes = request.getOrderDetails().stream()
             .map(CreateOrderRequest.CreateOrderDetailRequest::getShoeCode).toList();
         Map<Long, Shoe> shoeMap = shoeRepository.findAllByShoeCodes(shoeCodes).stream()
             .collect(Collectors.toMap(Shoe::getShoeCode, Function.identity()));
 
-        BigDecimal totalPrice = calculateTotalPrice(shoeMap, request.getOrderDetails());
+        // 주문 항목 생성
+        List<OrderDetail> details = request.getOrderDetails().stream()
+            .filter(requestedDetail -> Objects.nonNull(shoeMap.get(requestedDetail.getShoeCode())))
+            .map(requestedDetail ->
+                OrderDetail.create(
+                    requestedDetail.getShoeCode(),
+                    shoeMap.get(requestedDetail.getShoeCode()).getPrice(),
+                    requestedDetail.getCount()
+                )
+            )
+            .toList();
+
+        // 전체 가격 계산
+//        BigDecimal totalPrice = calculateTotalPrice(shoeMap, request.getOrderDetails());
 
         // 결제 방식 생성
         List<Payment> payments = request.getPayments().stream()
@@ -56,7 +63,7 @@ public class OrderService {
             .toList();
 
         // 주문 생성 및 저장
-        Order order = Order.create(details, totalPrice, payments);
+        Order order = Order.create(details, payments);
         Order savedOrder = orderRepository.save(order);
 
         return OrderDto.from(savedOrder);

@@ -33,6 +33,7 @@ class OrderDetail {
 Long orderDetailNo
 OrderStatus orderStatus
 Long shoeCode
+BigDecimal unitPrice
 Long count
 + _create()
 # partialCancel()

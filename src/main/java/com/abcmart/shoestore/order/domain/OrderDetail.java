@@ -2,6 +2,7 @@ package com.abcmart.shoestore.order.domain;
 
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -19,18 +20,22 @@ public class OrderDetail {
     private Long shoeCode;
 
     @NotNull
+    private BigDecimal unitPrice;
+
+    @NotNull
     private Long count;
 
-    private OrderDetail(Long shoeCode, Long count) {
+    private OrderDetail(Long shoeCode, BigDecimal unitPrice, Long count) {
 
         this.orderStatus = OrderStatus.NORMAL;
         this.shoeCode = shoeCode;
+        this.unitPrice = unitPrice;
         this.count = count;
     }
 
-    public static OrderDetail create(Long shoeCode, Long count) {
+    public static OrderDetail create(Long shoeCode, BigDecimal unitPrice, Long count) {
 
-        return new OrderDetail(shoeCode, count);
+        return new OrderDetail(shoeCode, unitPrice, count);
     }
 
     protected OrderDetail partialCancel(Long removeCount) {

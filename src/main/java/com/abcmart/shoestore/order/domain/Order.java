@@ -34,19 +34,22 @@ public class Order {
     @NotEmpty
     private Map<String, Payment> payments;
 
-    private Order(List<OrderDetail> details, BigDecimal totalAmount, List<Payment> payments) {
+    private Order(List<OrderDetail> details, List<Payment> payments) {
 
         this.status = OrderStatus.NORMAL;
         this.details = details;
-        this.totalAmount = totalAmount;
+        this.totalAmount = details.stream()
+            .map(detail ->
+                detail.getUnitPrice().multiply(BigDecimal.valueOf(detail.getCount()))
+            )
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
         this.payments = payments.stream()
             .collect(Collectors.toMap(Payment::getId, Function.identity()));
     }
 
-    public static Order create(List<OrderDetail> detailEntities, BigDecimal totalAmount,
-        List<Payment> payments) {
+    public static Order create(List<OrderDetail> detailEntities, List<Payment> payments) {
 
-        return new Order(detailEntities, totalAmount, payments);
+        return new Order(detailEntities, payments);
     }
 
     public void totalCancel() {
