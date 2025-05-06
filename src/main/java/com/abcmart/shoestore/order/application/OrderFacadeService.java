@@ -24,8 +24,9 @@ public class OrderFacadeService {
         Order order = orderService.createOrder(request.getOrderDetails());
         List<Payment> payments = paymentService.createPayment(request.getPayments());
         order.updatePaymentIds(payments.stream().map(Payment::getId).toList());
+        Order updatedOrder = orderService.simpleUpdateOrder(order);
 
-        return OrderDto.from(order, payments);
+        return OrderDto.from(updatedOrder, payments);
     }
 
     @Transactional

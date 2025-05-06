@@ -74,6 +74,12 @@ public class OrderService {
         return orderRepository.save(order);
     }
 
+    @Transactional
+    public Order simpleUpdateOrder(Order order) {
+
+        return orderRepository.save(order);
+    }
+
     private static IllegalArgumentException orderNotFoundException() {
 
         return new IllegalArgumentException("Order not found");
