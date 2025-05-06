@@ -21,7 +21,7 @@ Long orderNo
 OrderStatus status
 List<OrderDetail> details
 BigDecimal totalAmount
-Map<String, Payment> payments
+List<String> paymentIds
 + _create()
 + totalCancel()
 + partialCancel()
@@ -78,7 +78,6 @@ BC
 
 
 Order <-- OrderDetail
-Order <-- Payment
 Payment <-- CashPayment
 Payment <-- CardPayment
 
