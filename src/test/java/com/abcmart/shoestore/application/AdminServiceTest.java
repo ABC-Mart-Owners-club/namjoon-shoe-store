@@ -12,13 +12,13 @@ import com.abcmart.shoestore.admin.application.response.ShoeSaleAmountResponse;
 import com.abcmart.shoestore.admin.application.response.ShoeSaleAmountResponse.CreditCardSaleAmountResponse;
 import com.abcmart.shoestore.admin.application.response.ShoeSaleCountResponse;
 import com.abcmart.shoestore.admin.application.response.ShoeSaleCountResponse.SoldShoe;
-import com.abcmart.shoestore.payment.domain.CardPayment;
 import com.abcmart.shoestore.order.domain.OrderDetail;
-import com.abcmart.shoestore.shoe.domain.Shoe;
 import com.abcmart.shoestore.order.repository.OrderRepository;
-import com.abcmart.shoestore.payment.repository.PaymentRepository;
-import com.abcmart.shoestore.shoe.repository.ShoeRepository;
+import com.abcmart.shoestore.payment.domain.CardPayment;
 import com.abcmart.shoestore.payment.domain.CreditCardType;
+import com.abcmart.shoestore.payment.repository.PaymentRepository;
+import com.abcmart.shoestore.shoe.domain.Shoe;
+import com.abcmart.shoestore.shoe.repository.ShoeRepository;
 import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -62,9 +62,9 @@ class AdminServiceTest {
         long shoe1SaleCount = 2L;
         long shoe2SaleCount = 3L;
         long shoe3SaleCount = 5L;
-        OrderDetail orderDetail1 = createOrderDetail(shoeCode1, shoe1SaleCount);
-        OrderDetail orderDetail2 = createOrderDetail(shoeCode2, shoe2SaleCount);
-        OrderDetail orderDetail3 = createOrderDetail(shoeCode3, shoe3SaleCount);
+        OrderDetail orderDetail1 = createOrderDetail(shoe1, shoe1SaleCount);
+        OrderDetail orderDetail2 = createOrderDetail(shoe2, shoe2SaleCount);
+        OrderDetail orderDetail3 = createOrderDetail(shoe3, shoe3SaleCount);
         List<OrderDetail> orderDetailList = List.of(
             orderDetail1, orderDetail2, orderDetail3
         );

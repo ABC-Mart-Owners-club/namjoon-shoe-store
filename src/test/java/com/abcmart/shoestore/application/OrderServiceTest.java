@@ -1,34 +1,38 @@
 package com.abcmart.shoestore.application;
 
-import static com.abcmart.shoestore.testutil.PaymentTestDomainFactory.createCash;
-import static com.abcmart.shoestore.testutil.PaymentTestDomainFactory.createCreditCard;
 import static com.abcmart.shoestore.testutil.OrderTestDomainFactory.createOrderBy;
 import static com.abcmart.shoestore.testutil.OrderTestDomainFactory.createOrderDetail;
+import static com.abcmart.shoestore.testutil.PaymentTestDomainFactory.createCash;
+import static com.abcmart.shoestore.testutil.PaymentTestDomainFactory.createCreditCard;
 import static com.abcmart.shoestore.testutil.ShoeTestDomainFactory.createShoeByShoeCode;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 
+import com.abcmart.shoestore.order.application.OrderFacadeService;
+import com.abcmart.shoestore.order.application.OrderService;
 import com.abcmart.shoestore.order.application.request.CreateOrderRequest;
 import com.abcmart.shoestore.order.application.request.CreateOrderRequest.CreateOrderDetailRequest;
 import com.abcmart.shoestore.order.application.request.CreateOrderRequest.CreatePaymentRequest;
 import com.abcmart.shoestore.order.domain.Order;
 import com.abcmart.shoestore.order.domain.OrderDetail;
-import com.abcmart.shoestore.payment.domain.Payment;
-import com.abcmart.shoestore.shoe.domain.Shoe;
-import com.abcmart.shoestore.order.application.OrderService;
+import com.abcmart.shoestore.order.domain.OrderStatus;
 import com.abcmart.shoestore.order.dto.OrderDetailDto;
 import com.abcmart.shoestore.order.dto.OrderDto;
-import com.abcmart.shoestore.payment.dto.PaymentDto;
 import com.abcmart.shoestore.order.repository.OrderRepository;
-import com.abcmart.shoestore.shoe.repository.ShoeRepository;
+import com.abcmart.shoestore.payment.application.PaymentService;
 import com.abcmart.shoestore.payment.domain.CreditCardType;
-import com.abcmart.shoestore.order.domain.OrderStatus;
+import com.abcmart.shoestore.payment.domain.Payment;
 import com.abcmart.shoestore.payment.domain.PaymentType;
+import com.abcmart.shoestore.payment.dto.PaymentDto;
+import com.abcmart.shoestore.payment.repository.PaymentRepository;
+import com.abcmart.shoestore.shoe.domain.Shoe;
+import com.abcmart.shoestore.shoe.repository.ShoeRepository;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,8 +49,14 @@ class OrderServiceTest {
     @Mock
     private OrderRepository orderRepository;
 
-    @InjectMocks
+    @Mock
+    private PaymentRepository paymentRepository;
+
     private OrderService orderService;
+    private PaymentService paymentService;
+
+    @InjectMocks
+    private OrderFacadeService orderFacadeService;
 
     static final Long orderNo1 = 1L;
     static final Long orderNo2 = 2L;
@@ -56,20 +66,30 @@ class OrderServiceTest {
     static final Long shoeCode2 = 2L;
     static final Long shoeCode3 = 3L;
 
+    static final Shoe shoe1 = createShoeByShoeCode(shoeCode1);
+    static final Shoe shoe2 = createShoeByShoeCode(shoeCode2);
+    static final Shoe shoe3 = createShoeByShoeCode(shoeCode3);
+
+    @BeforeEach
+    void setUp() {
+
+        orderService = new OrderService(shoeRepository, orderRepository);
+        paymentService = new PaymentService(paymentRepository);
+        orderFacadeService = new OrderFacadeService(orderService, paymentService);
+    }
+
     @Test
     @DisplayName("정상적으로 유효한 주문이 생성되고 현금 결제가 되었는지 확인한다.")
     void createOrderWithOnlyCash() {
 
         // given
-        Shoe shoe1 = createShoeByShoeCode(shoeCode1);
-        Shoe shoe2 = createShoeByShoeCode(shoeCode2);
-        Shoe shoe3 = createShoeByShoeCode(shoeCode3);
         List<Shoe> shoeEntities = List.of(shoe1, shoe2, shoe3);
 
         given(shoeRepository.findAllByShoeCodes(anyList())).willReturn(shoeEntities);
         given(orderRepository.save(any(Order.class)))
             .willAnswer(invocation -> invocation.getArgument(0));
-
+        given(paymentRepository.saveAll(anyList()))
+            .willAnswer(invocation -> invocation.getArgument(0));
 
         // when
         Long countOfShoeCode1 = 2L;
@@ -86,7 +106,7 @@ class OrderServiceTest {
             new CreatePaymentRequest(PaymentType.CASH, null, totalPrice));
         CreateOrderRequest request = new CreateOrderRequest(orderDetailRequests, paymentRequests);
 
-        OrderDto result = orderService.createOrder(request);
+        OrderDto result = orderFacadeService.createOrder(request);
 
 
         // then
@@ -130,13 +150,12 @@ class OrderServiceTest {
     void createOrderWithOnlyCreditCard() {
 
         // given
-        Shoe shoe1 = createShoeByShoeCode(shoeCode1);
-        Shoe shoe2 = createShoeByShoeCode(shoeCode2);
-        Shoe shoe3 = createShoeByShoeCode(shoeCode3);
         List<Shoe> shoeEntities = List.of(shoe1, shoe2, shoe3);
 
         given(shoeRepository.findAllByShoeCodes(anyList())).willReturn(shoeEntities);
         given(orderRepository.save(any(Order.class)))
+            .willAnswer(invocation -> invocation.getArgument(0));
+        given(paymentRepository.saveAll(anyList()))
             .willAnswer(invocation -> invocation.getArgument(0));
 
 
@@ -155,7 +174,7 @@ class OrderServiceTest {
             new CreatePaymentRequest(PaymentType.CREDIT_CARD, CreditCardType.HYUNDAI, totalPrice));
         CreateOrderRequest request = new CreateOrderRequest(orderDetailRequests, paymentRequests);
 
-        OrderDto result = orderService.createOrder(request);
+        OrderDto result = orderFacadeService.createOrder(request);
 
 
         // then
@@ -199,13 +218,12 @@ class OrderServiceTest {
     void createOrderWithCashAndCreditCard() {
 
         // given
-        Shoe shoe1 = createShoeByShoeCode(shoeCode1);
-        Shoe shoe2 = createShoeByShoeCode(shoeCode2);
-        Shoe shoe3 = createShoeByShoeCode(shoeCode3);
         List<Shoe> shoeEntities = List.of(shoe1, shoe2, shoe3);
 
         given(shoeRepository.findAllByShoeCodes(anyList())).willReturn(shoeEntities);
         given(orderRepository.save(any(Order.class)))
+            .willAnswer(invocation -> invocation.getArgument(0));
+        given(paymentRepository.saveAll(anyList()))
             .willAnswer(invocation -> invocation.getArgument(0));
 
 
@@ -228,7 +246,7 @@ class OrderServiceTest {
         );
         CreateOrderRequest request = new CreateOrderRequest(orderDetailRequests, paymentRequests);
 
-        OrderDto result = orderService.createOrder(request);
+        OrderDto result = orderFacadeService.createOrder(request);
 
 
         // then
@@ -272,17 +290,17 @@ class OrderServiceTest {
     void cancelOrder() {
 
         // given
-        OrderDetail orderDetail = createOrderDetail(shoeCode1, 5L);
+        OrderDetail orderDetail = createOrderDetail(shoe1, 5L);
         List<Payment> payments = List.of(createCash(), createCreditCard());
         Order order = createOrderBy(orderNo1, List.of(orderDetail), payments);
 
-        given(orderRepository.findByOrderNo(any())).willReturn(order);
+        given(orderRepository.findByOrderNo(any())).willReturn(Optional.of(order));
         given(orderRepository.save(any(Order.class)))
             .willAnswer(invocation -> invocation.getArgument(0));
 
 
         // when
-        OrderDto orderDto = orderService.cancelOrder(orderNo1);
+        OrderDto orderDto = orderFacadeService.cancelOrder(orderNo1);
 
 
         // then
@@ -294,22 +312,19 @@ class OrderServiceTest {
     void partialCancel() {
 
         // given
-        Shoe shoe1 = createShoeByShoeCode(shoeCode1);
-
-        OrderDetail orderDetail = createOrderDetail(shoeCode1, 5L);
+        OrderDetail orderDetail = createOrderDetail(shoe1, 5L);
         List<Payment> payments = List.of(createCash(), createCreditCard());
         Order order = createOrderBy(orderNo1, List.of(orderDetail), payments);
 
 
-        given(shoeRepository.findByShoeCode(anyLong())).willReturn(shoe1);
-        given(orderRepository.findByOrderNo(any())).willReturn(order);
+        given(orderRepository.findByOrderNo(any())).willReturn(Optional.of(order));
         given(orderRepository.save(any(Order.class)))
             .willAnswer(invocation -> invocation.getArgument(0));
 
 
         // when
         long removeCount = 1L;
-        OrderDto orderDto = orderService.partialCancel(orderNo1, shoeCode1, removeCount);
+        OrderDto orderDto = orderFacadeService.partialCancel(orderNo1, shoeCode1, removeCount);
 
 
         // then
@@ -326,21 +341,18 @@ class OrderServiceTest {
     void totalCancelWithPartialCancel() {
 
         // given
-        Shoe shoe1 = createShoeByShoeCode(shoeCode1);
-
-        OrderDetail orderDetail = createOrderDetail(shoeCode1, 5L);
+        OrderDetail orderDetail = createOrderDetail(shoe1, 5L);
         List<Payment> payments = List.of(createCash(), createCreditCard());
         Order order = createOrderBy(orderNo1, List.of(orderDetail), payments);
 
-        given(shoeRepository.findByShoeCode(anyLong())).willReturn(shoe1);
-        given(orderRepository.findByOrderNo(any())).willReturn(order);
+        given(orderRepository.findByOrderNo(any())).willReturn(Optional.of(order));
         given(orderRepository.save(any(Order.class)))
             .willAnswer(invocation -> invocation.getArgument(0));
 
 
         // when
         long removeCount = 5L;
-        OrderDto orderDto = orderService.partialCancel(orderNo1, shoeCode1, removeCount);
+        OrderDto orderDto = orderFacadeService.partialCancel(orderNo1, shoeCode1, removeCount);
 
 
         // then

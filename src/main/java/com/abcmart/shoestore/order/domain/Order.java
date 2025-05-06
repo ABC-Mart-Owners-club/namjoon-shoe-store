@@ -1,14 +1,11 @@
 package com.abcmart.shoestore.order.domain;
 
-import com.abcmart.shoestore.payment.domain.Payment;
-import com.abcmart.shoestore.shoe.domain.Shoe;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -28,80 +25,48 @@ public class Order {
     @NotEmpty
     private List<OrderDetail> details;
 
-    @NotNull
-    private BigDecimal totalAmount;
+    private List<String> paymentIds;
 
-    @NotEmpty
-    private Map<String, Payment> payments;
-
-    private Order(List<OrderDetail> details, List<Payment> payments) {
+    private Order(List<OrderDetail> details) {
 
         this.status = OrderStatus.NORMAL;
         this.details = details;
-        this.totalAmount = details.stream()
-            .map(detail ->
-                detail.getUnitPrice().multiply(BigDecimal.valueOf(detail.getCount()))
-            )
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-        this.payments = payments.stream()
-            .collect(Collectors.toMap(Payment::getId, Function.identity()));
     }
 
-    public static Order create(List<OrderDetail> detailEntities, List<Payment> payments) {
+    public static Order create(List<OrderDetail> detailEntities) {
 
-        return new Order(detailEntities, payments);
+        return new Order(detailEntities);
     }
 
     public void totalCancel() {
 
         validateAvailableCancel();
 
-        this.payments.values().forEach(Payment::updatePaidAmountToZero);
         this.status = OrderStatus.CANCEL;
+        this.details.forEach(OrderDetail::totalCancel);
     }
 
-    public Order partialCancel(Shoe shoe, Long removeCount) {
+    public BigDecimal partialCancel(Long shoeCode, Long removeCount) {
 
         validateAvailableCancel();
 
         Map<Long, OrderDetail> detailMap = this.details.stream()
                 .collect(Collectors.toMap(OrderDetail::getShoeCode, Function.identity()));
 
-        OrderDetail orderDetail = detailMap.get(shoe.getShoeCode());
-        if (Objects.isNull(orderDetail)) {
-            throw new IllegalArgumentException("ShoeCode not found in order details");
-        }
+        OrderDetail orderDetail = Optional.ofNullable(detailMap.get(shoeCode))
+            .orElseThrow(() -> new IllegalArgumentException("ShoeCode not found in order details"));
 
-        orderDetail.partialCancel(removeCount);
+        BigDecimal cancelledAmount = orderDetail.partialCancel(removeCount);
         if (validateAllCancelled()) {
             this.status = OrderStatus.CANCEL;
         }
 
-        BigDecimal totalCancelAmount = shoe.getPrice().multiply(BigDecimal.valueOf(removeCount));
-        Optional<Payment> availablePayment = this.payments.values().stream()
-            .filter(payment -> payment.validateAvailableCancel(totalCancelAmount))
-            .findFirst();
-        if (availablePayment.isPresent()) {
+        return cancelledAmount;
+    }
 
-            String paymentId = availablePayment.get().getId();
-            Optional<Payment> targetPayment = Optional.ofNullable(this.payments.get(paymentId));
-            targetPayment.orElseThrow(
-                () -> new IllegalArgumentException("Payment not found")
-            ).partialCancel(totalCancelAmount);
+    public void updatePaymentIds(List<String> paymentIds) {
 
-        } else {
-
-            BigDecimal remainCancelAmount = totalCancelAmount;
-            List<Payment> targetPayments = this.payments.values().stream().toList();
-            for (Payment payment : targetPayments) {
-                BigDecimal canceledAmount = payment.partialCancel(remainCancelAmount);
-                remainCancelAmount = remainCancelAmount.subtract(canceledAmount);
-            }
-            this.payments = targetPayments.stream()
-                .collect(Collectors.toMap(Payment::getId, Function.identity()));
-        }
-
-        return this;
+        this.paymentIds = paymentIds;
     }
 
     private void validateAvailableCancel() {
@@ -114,5 +79,15 @@ public class Order {
     private boolean validateAllCancelled() {
 
         return this.status.isCancel() || this.details.stream().noneMatch(OrderDetail::isNormal);
+    }
+
+    public BigDecimal getCurrentTotalAmount() {
+
+        return this.details.stream()
+            .filter(OrderDetail::isNormal)
+            .map(orderDetail ->
+                orderDetail.getUnitPrice().multiply(BigDecimal.valueOf(orderDetail.getCount()))
+            )
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

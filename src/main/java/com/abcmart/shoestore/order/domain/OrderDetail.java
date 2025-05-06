@@ -38,7 +38,14 @@ public class OrderDetail {
         return new OrderDetail(shoeCode, unitPrice, count);
     }
 
-    protected OrderDetail partialCancel(Long removeCount) {
+    protected OrderDetail totalCancel() {
+
+        this.orderDetailStatus = OrderStatus.CANCEL;
+        this.count = 0L;
+        return this;
+    }
+
+    protected BigDecimal partialCancel(Long removeCount) {
 
         if (removeCount > this.count) {
             throw new IllegalArgumentException("Remove count exceeds order count");
@@ -48,7 +55,7 @@ public class OrderDetail {
         if (this.count == 0) {
             this.orderDetailStatus = OrderStatus.CANCEL;
         }
-        return this;
+        return this.unitPrice.multiply(BigDecimal.valueOf(removeCount));
     }
 
     public boolean isNormal() {
