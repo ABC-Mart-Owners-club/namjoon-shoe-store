@@ -1,7 +1,5 @@
 @startuml
 
-
-
 class Shoe {
 Long shoeCode
 String shoeName
@@ -20,11 +18,12 @@ class Order {
 Long orderNo
 OrderStatus status
 List<OrderDetail> details
-BigDecimal totalAmount
 List<String> paymentIds
 + _create()
 + totalCancel()
 + partialCancel()
++ updatePaymentIds()
++ getCurrentTotalAmount()
 - validateAvailableCancel()
 - validateAllCancelled()
 }

@@ -69,6 +69,16 @@ public class Order {
         this.paymentIds = paymentIds;
     }
 
+    public BigDecimal getCurrentTotalAmount() {
+
+        return this.details.stream()
+            .filter(OrderDetail::isNormal)
+            .map(orderDetail ->
+                orderDetail.getUnitPrice().multiply(BigDecimal.valueOf(orderDetail.getCount()))
+            )
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
     private void validateAvailableCancel() {
 
         if (this.status.isCancel()) {
@@ -79,15 +89,5 @@ public class Order {
     private boolean validateAllCancelled() {
 
         return this.status.isCancel() || this.details.stream().noneMatch(OrderDetail::isNormal);
-    }
-
-    public BigDecimal getCurrentTotalAmount() {
-
-        return this.details.stream()
-            .filter(OrderDetail::isNormal)
-            .map(orderDetail ->
-                orderDetail.getUnitPrice().multiply(BigDecimal.valueOf(orderDetail.getCount()))
-            )
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }
