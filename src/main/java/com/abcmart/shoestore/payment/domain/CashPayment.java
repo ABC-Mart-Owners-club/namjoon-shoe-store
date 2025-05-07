@@ -8,11 +8,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CashPayment extends Payment {
 
-
+    //region Constructor
     private CashPayment(BigDecimal paidAmount) {
 
         super(PaymentType.CASH, paidAmount);
     }
+    //endregion
 
     public static CashPayment payInCash(BigDecimal paidAmount) {
 

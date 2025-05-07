@@ -24,6 +24,7 @@ public class Shoe {
     @NotNull
     private BigDecimal price;
 
+    //region Constructor
     private Shoe(String shoeName, String color, int size, BigDecimal price) {
 
         this.shoeName = shoeName;
@@ -31,6 +32,7 @@ public class Shoe {
         this.size = size;
         this.price = price;
     }
+    //endregion
 
     public static Shoe create(String shoeName, String color, int size, BigDecimal price) {
 

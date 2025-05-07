@@ -25,6 +25,7 @@ public class OrderDetail {
     @NotNull
     private Long count;
 
+    //region Constructor
     private OrderDetail(Long shoeCode, BigDecimal unitPrice, Long count) {
 
         this.orderDetailStatus = OrderStatus.NORMAL;
@@ -32,6 +33,7 @@ public class OrderDetail {
         this.unitPrice = unitPrice;
         this.count = count;
     }
+    //endregion
 
     public static OrderDetail create(Long shoeCode, BigDecimal unitPrice, Long count) {
 

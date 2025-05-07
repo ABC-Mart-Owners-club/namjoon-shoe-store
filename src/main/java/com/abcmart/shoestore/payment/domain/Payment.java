@@ -20,12 +20,14 @@ public abstract class Payment {
     @NotNull
     private BigDecimal paidAmount;
 
+    //region Constructor
     protected Payment(PaymentType type, BigDecimal paidAmount) {
 
         this.id = UUID.randomUUID().toString();
         this.type = type;
         this.paidAmount = paidAmount;
     }
+    //endregion
 
     protected BigDecimal updatePaidAmount(BigDecimal paidAmount) {
 

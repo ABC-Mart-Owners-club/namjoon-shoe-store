@@ -10,11 +10,13 @@ public class CardPayment extends Payment {
 
     private CreditCardType creditCardType;
 
+    //region Constructor
     private CardPayment(CreditCardType creditCardType, BigDecimal paidAmount) {
 
         super(PaymentType.CREDIT_CARD, paidAmount);
         this.creditCardType = creditCardType;
     }
+    //endregion
 
     public static CardPayment payInCreditCard(CreditCardType creditCardType, BigDecimal paidAmount) {
 

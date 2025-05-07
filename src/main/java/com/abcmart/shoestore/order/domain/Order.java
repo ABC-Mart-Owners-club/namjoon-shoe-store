@@ -27,11 +27,13 @@ public class Order {
 
     private List<String> paymentIds;
 
+    //region Constructor
     private Order(List<OrderDetail> details) {
 
         this.status = OrderStatus.NORMAL;
         this.details = details;
     }
+    //endregion
 
     public static Order create(List<OrderDetail> detailEntities) {
 
