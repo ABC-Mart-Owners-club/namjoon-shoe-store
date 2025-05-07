@@ -1,9 +1,12 @@
 package com.abcmart.shoestore.application;
 
+import static com.abcmart.shoestore.testutil.InventoryTestDomainFactory.createInventory;
 import static com.abcmart.shoestore.testutil.OrderTestDomainFactory.createOrderDetail;
 import static com.abcmart.shoestore.testutil.PaymentTestDomainFactory.createCreditCard;
 import static com.abcmart.shoestore.testutil.ShoeTestDomainFactory.createShoeBy;
+import static com.abcmart.shoestore.testutil.ShoeTestDomainFactory.createShoeByShoeCode;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
 
@@ -12,6 +15,9 @@ import com.abcmart.shoestore.admin.application.response.ShoeSaleAmountResponse;
 import com.abcmart.shoestore.admin.application.response.ShoeSaleAmountResponse.CreditCardSaleAmountResponse;
 import com.abcmart.shoestore.admin.application.response.ShoeSaleCountResponse;
 import com.abcmart.shoestore.admin.application.response.ShoeSaleCountResponse.SoldShoe;
+import com.abcmart.shoestore.admin.application.response.ShoeStockResponse;
+import com.abcmart.shoestore.inventory.domain.Inventory;
+import com.abcmart.shoestore.inventory.repository.InventoryRepository;
 import com.abcmart.shoestore.order.domain.OrderDetail;
 import com.abcmart.shoestore.order.repository.OrderRepository;
 import com.abcmart.shoestore.payment.domain.CardPayment;
@@ -21,6 +27,7 @@ import com.abcmart.shoestore.shoe.domain.Shoe;
 import com.abcmart.shoestore.shoe.repository.ShoeRepository;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,6 +40,9 @@ class AdminServiceTest {
 
     @Mock
     private ShoeRepository shoeRepository;
+
+    @Mock
+    private InventoryRepository inventoryRepository;
 
     @Mock
     private OrderRepository orderRepository;
@@ -71,10 +81,8 @@ class AdminServiceTest {
 
         given(orderRepository.findAllNormalStatusOrderDetails()).willReturn(orderDetailList);
 
-
         // when
         ShoeSaleCountResponse shoeSaleCountResponse = adminService.getShoeSaleCount();
-
 
         // then
         assertThat(shoeSaleCountResponse.getTotalElements()).isEqualTo(shoeEntities.size());
@@ -83,21 +91,24 @@ class AdminServiceTest {
             .filter(soldShoe -> soldShoe.getShoeCode().equals(shoeCode1)).findFirst().get();
         assertThat(
             soldShoe1.getSaleCount().equals(orderDetail1.getCount())
-                && soldShoe1.getTotalPrice().equals(shoe1.getPrice().multiply(BigDecimal.valueOf(shoe1SaleCount)))
+                && soldShoe1.getTotalPrice()
+                .equals(shoe1.getPrice().multiply(BigDecimal.valueOf(shoe1SaleCount)))
         ).isTrue();
 
         SoldShoe soldShoe2 = shoeSaleCountResponse.getSoldShoes().stream()
             .filter(soldShoe -> soldShoe.getShoeCode().equals(shoeCode2)).findFirst().get();
         assertThat(
             soldShoe2.getSaleCount().equals(orderDetail2.getCount())
-                && soldShoe2.getTotalPrice().equals(shoe2.getPrice().multiply(BigDecimal.valueOf(shoe2SaleCount)))
+                && soldShoe2.getTotalPrice()
+                .equals(shoe2.getPrice().multiply(BigDecimal.valueOf(shoe2SaleCount)))
         ).isTrue();
 
         SoldShoe soldShoe3 = shoeSaleCountResponse.getSoldShoes().stream()
             .filter(soldShoe -> soldShoe.getShoeCode().equals(shoeCode3)).findFirst().get();
         assertThat(
             soldShoe3.getSaleCount().equals(orderDetail3.getCount())
-                && soldShoe3.getTotalPrice().equals(shoe3.getPrice().multiply(BigDecimal.valueOf(shoe3SaleCount)))
+                && soldShoe3.getTotalPrice()
+                .equals(shoe3.getPrice().multiply(BigDecimal.valueOf(shoe3SaleCount)))
         ).isTrue();
     }
 
@@ -113,10 +124,8 @@ class AdminServiceTest {
         List<CardPayment> cardPaymentList = List.of(cardPayment1, cardPayment2, cardPayment3);
         given(paymentRepository.findAllCreditCardPayments()).willReturn(cardPaymentList);
 
-
         // when
         ShoeSaleAmountResponse result = adminService.getShoeSaleAmountByCreditCardType();
-
 
         // then
         List<CreditCardType> requestCreditCardTypeList = cardPaymentList.stream()
@@ -126,6 +135,31 @@ class AdminServiceTest {
         List<CreditCardType> creditCardTypeResultList = result.creditCardSaleAmounts().stream()
             .map(CreditCardSaleAmountResponse::creditCardType)
             .toList();
-        assertThat(creditCardTypeResultList).contains(requestCreditCardTypeList.toArray(new CreditCardType[0]));
+        assertThat(creditCardTypeResultList).contains(
+            requestCreditCardTypeList.toArray(new CreditCardType[0]));
+    }
+
+
+    @Test
+    @DisplayName("재고에서 신발 상품을 조회한다.")
+    void findShoeInventoryByShoeCode() {
+
+        // given
+        Shoe shoe1 = createShoeByShoeCode(shoeCode1);
+        Long stock = 10L;
+        Inventory shoe1Inventory = createInventory(shoeCode1, stock);
+        given(shoeRepository.findByShoeCode(any())).willReturn(Optional.of(shoe1));
+        given(inventoryRepository.findByShoeCode(any())).willReturn(Optional.of(shoe1Inventory));
+
+        // when
+        ShoeStockResponse stockResponse = adminService.findInventoryByShoeCode(shoeCode1);
+
+        // then
+        assertThat(stockResponse.shoeCode()).isEqualTo(shoe1.getShoeCode());
+        assertThat(stockResponse.shoeName()).isEqualTo(shoe1.getShoeName());
+        assertThat(stockResponse.color()).isEqualTo(shoe1.getColor());
+        assertThat(stockResponse.size()).isEqualTo(shoe1.getSize());
+        assertThat(stockResponse.price()).isEqualTo(shoe1.getPrice());
+        assertThat(stockResponse.stock()).isEqualTo(stock);
     }
 }

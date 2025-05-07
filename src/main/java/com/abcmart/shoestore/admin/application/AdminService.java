@@ -4,6 +4,9 @@ import com.abcmart.shoestore.admin.application.response.ShoeSaleAmountResponse;
 import com.abcmart.shoestore.admin.application.response.ShoeSaleAmountResponse.CreditCardSaleAmountResponse;
 import com.abcmart.shoestore.admin.application.response.ShoeSaleCountResponse;
 import com.abcmart.shoestore.admin.application.response.ShoeSaleCountResponse.SoldShoe;
+import com.abcmart.shoestore.admin.application.response.ShoeStockResponse;
+import com.abcmart.shoestore.inventory.domain.Inventory;
+import com.abcmart.shoestore.inventory.repository.InventoryRepository;
 import com.abcmart.shoestore.payment.domain.CardPayment;
 import com.abcmart.shoestore.order.domain.OrderDetail;
 import com.abcmart.shoestore.shoe.domain.Shoe;
@@ -30,6 +33,7 @@ public class AdminService {
 
     private final OrderRepository orderRepository;
     private final ShoeRepository shoeRepository;
+    private final InventoryRepository inventoryRepository;
     private final PaymentRepository paymentRepository;
 
     @Transactional(readOnly = true)
@@ -82,5 +86,17 @@ public class AdminService {
         }
 
         return ShoeSaleAmountResponse.from(creditCardSaleAmounts);
+    }
+
+    @Transactional(readOnly = true)
+    public ShoeStockResponse findInventoryByShoeCode(Long shoeCode) {
+
+        Shoe shoe = shoeRepository.findByShoeCode(shoeCode)
+            .orElseThrow(() -> new IllegalArgumentException("There are no such shoes."));
+
+        Inventory inventory = inventoryRepository.findByShoeCode(shoeCode)
+            .orElseThrow(() -> new IllegalArgumentException("We don't sell those shoes in our store."));
+
+        return ShoeStockResponse.of(shoe, inventory);
     }
 }
