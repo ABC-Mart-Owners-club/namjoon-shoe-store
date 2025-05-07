@@ -40,6 +40,22 @@ Long count
 + isCancel()
 }
 
+enum PaymentType {
+CASH
+CREDIT_CARD
+}
+
+enum CreditCardType {
+SHINHAN
+SAMSUNG
+KB_KOOKMIN
+HYUNDAI
+LOTTE
+WOORI
+HANA
+BC
+}
+
 abstract class Payment {
 String id
 PaymentType type
@@ -59,25 +75,17 @@ CreditCardType creditCardType
 + _payInCreditCard()
 }
 
-enum PaymentType {
-CASH
-CREDIT_CARD
+class Inventory {
+Long shoeCode
+Long stock
++ _create()
++ restock()
++ deductStock()
 }
-
-enum CreditCardType {
-SHINHAN
-SAMSUNG
-KB_KOOKMIN
-HYUNDAI
-LOTTE
-WOORI
-HANA
-BC
-}
-
 
 Order <-- OrderDetail
 Payment <-- CashPayment
 Payment <-- CardPayment
+Inventory -- Shoe
 
 @enduml
