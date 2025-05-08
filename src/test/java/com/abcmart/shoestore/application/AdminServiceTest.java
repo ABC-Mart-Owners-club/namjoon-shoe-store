@@ -162,4 +162,46 @@ class AdminServiceTest {
         assertThat(stockResponse.price()).isEqualTo(shoe1.getPrice());
         assertThat(stockResponse.stock()).isEqualTo(stock);
     }
+
+    @Test
+    @DisplayName("재고에 신발이 없는 상태에서 신발 상품을 추가하고 정상적으로 추가되었는지 확인한다.")
+    void createOrRestockInventoryWhenNotExist() {
+
+        // given
+        Shoe shoe1 = createShoeByShoeCode(shoeCode1);
+        Long stock = 10L;
+        Inventory shoe1Inventory = createInventory(shoeCode1, stock);
+        given(shoeRepository.findByShoeCode(shoeCode1)).willReturn(Optional.of(shoe1));
+        given(inventoryRepository.findByShoeCode(any())).willReturn(Optional.empty());
+        given(inventoryRepository.save(any(Inventory.class)))
+            .willAnswer(invocation -> invocation.getArgument(0));
+
+        // when
+        ShoeStockResponse stockResponse = adminService.createOrRestockInventory(shoeCode1, stock);
+
+        // then
+        assertThat(stockResponse.shoeCode()).isEqualTo(shoe1Inventory.getShoeCode());
+        assertThat(stockResponse.stock()).isEqualTo(shoe1Inventory.getStock());
+    }
+
+    @Test
+    @DisplayName("재고에 신발이 있는 상태에서 신발 상품의 재고를 추가하고 정상적으로 추가되었는지 확인한다.")
+    void createOrRestockInventoryWhenExist() {
+
+        // given
+        Shoe shoe1 = createShoeByShoeCode(shoeCode1);
+        Long stock = 10L;
+        Inventory shoe1Inventory = createInventory(shoeCode1, stock);
+        given(shoeRepository.findByShoeCode(shoeCode1)).willReturn(Optional.of(shoe1));
+        given(inventoryRepository.findByShoeCode(any())).willReturn(Optional.of(shoe1Inventory));
+        given(inventoryRepository.save(any(Inventory.class)))
+            .willAnswer(invocation -> invocation.getArgument(0));
+
+        // when
+        ShoeStockResponse stockResponse = adminService.createOrRestockInventory(shoeCode1, stock);
+
+        // then
+        assertThat(stockResponse.shoeCode()).isEqualTo(shoe1Inventory.getShoeCode());
+        assertThat(stockResponse.stock()).isEqualTo(shoe1Inventory.getStock());
+    }
 }

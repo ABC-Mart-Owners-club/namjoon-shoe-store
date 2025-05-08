@@ -7,20 +7,21 @@ import com.abcmart.shoestore.admin.application.response.ShoeSaleCountResponse.So
 import com.abcmart.shoestore.admin.application.response.ShoeStockResponse;
 import com.abcmart.shoestore.inventory.domain.Inventory;
 import com.abcmart.shoestore.inventory.repository.InventoryRepository;
-import com.abcmart.shoestore.payment.domain.CardPayment;
 import com.abcmart.shoestore.order.domain.OrderDetail;
+import com.abcmart.shoestore.order.repository.OrderRepository;
+import com.abcmart.shoestore.payment.domain.CardPayment;
+import com.abcmart.shoestore.payment.domain.CreditCardType;
+import com.abcmart.shoestore.payment.repository.PaymentRepository;
 import com.abcmart.shoestore.shoe.domain.Shoe;
 import com.abcmart.shoestore.shoe.dto.ShoeDto;
-import com.abcmart.shoestore.order.repository.OrderRepository;
-import com.abcmart.shoestore.payment.repository.PaymentRepository;
 import com.abcmart.shoestore.shoe.repository.ShoeRepository;
-import com.abcmart.shoestore.payment.domain.CreditCardType;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -98,5 +99,25 @@ public class AdminService {
             .orElseThrow(() -> new IllegalArgumentException("We don't sell those shoes in our store."));
 
         return ShoeStockResponse.of(shoe, inventory);
+    }
+
+    @Transactional
+    public ShoeStockResponse createOrRestockInventory(Long shoeCode, Long stock) {
+
+        Shoe shoe = shoeRepository.findByShoeCode(shoeCode)
+            .orElseThrow(() -> new IllegalArgumentException("There are no such shoes."));
+
+        Optional<Inventory> optionalInventory = inventoryRepository.findByShoeCode(shoe.getShoeCode());
+        Inventory targetInventory;
+        if (optionalInventory.isPresent()) {
+            targetInventory = optionalInventory.get();
+            targetInventory.restock(stock);
+        } else {
+            targetInventory = Inventory.create(shoeCode, stock);
+        }
+
+        Inventory savedInventory = inventoryRepository.save(targetInventory);
+
+        return ShoeStockResponse.of(shoe, savedInventory);
     }
 }

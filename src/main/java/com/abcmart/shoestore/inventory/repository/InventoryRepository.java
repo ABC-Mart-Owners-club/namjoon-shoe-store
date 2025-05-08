@@ -9,4 +9,5 @@ public interface InventoryRepository {
 
     Optional<Inventory> findByShoeCode(Long shoeCode);
 
+    Inventory save(Inventory inventory);
 }
