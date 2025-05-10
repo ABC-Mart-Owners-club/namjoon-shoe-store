@@ -1,15 +1,19 @@
 package com.abcmart.shoestore.application;
 
+import static com.abcmart.shoestore.testutil.InventoryTestDomainFactory.createInventory;
 import static com.abcmart.shoestore.testutil.OrderTestDomainFactory.createOrderBy;
 import static com.abcmart.shoestore.testutil.OrderTestDomainFactory.createOrderDetail;
 import static com.abcmart.shoestore.testutil.PaymentTestDomainFactory.createCash;
 import static com.abcmart.shoestore.testutil.PaymentTestDomainFactory.createCreditCard;
 import static com.abcmart.shoestore.testutil.ShoeTestDomainFactory.createShoeByShoeCode;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
 
+import com.abcmart.shoestore.inventory.domain.Inventory;
+import com.abcmart.shoestore.inventory.repository.InventoryRepository;
 import com.abcmart.shoestore.order.application.OrderFacadeService;
 import com.abcmart.shoestore.order.application.OrderService;
 import com.abcmart.shoestore.order.application.request.CreateOrderRequest;
@@ -52,6 +56,9 @@ class OrderServiceTest {
     @Mock
     private PaymentRepository paymentRepository;
 
+    @Mock
+    private InventoryRepository inventoryRepository;
+
     private OrderService orderService;
     private PaymentService paymentService;
 
@@ -70,10 +77,16 @@ class OrderServiceTest {
     static final Shoe shoe2 = createShoeByShoeCode(shoeCode2);
     static final Shoe shoe3 = createShoeByShoeCode(shoeCode3);
 
+    static final Long stockCount1 = 1L;
+    static final Long stockCount2 = 2L;
+    static final Long stockCount3 = 3L;
+    static final Long stockCount4 = 4L;
+    static final Long stockCount5 = 5L;
+
     @BeforeEach
     void setUp() {
 
-        orderService = new OrderService(shoeRepository, orderRepository);
+        orderService = new OrderService(shoeRepository, orderRepository, inventoryRepository);
         paymentService = new PaymentService(paymentRepository);
         orderFacadeService = new OrderFacadeService(orderService, paymentService);
     }
@@ -90,6 +103,12 @@ class OrderServiceTest {
             .willAnswer(invocation -> invocation.getArgument(0));
         given(paymentRepository.saveAll(anyList()))
             .willAnswer(invocation -> invocation.getArgument(0));
+
+        Inventory inventory1 = createInventory(shoeCode1, stockCount2);
+        Inventory inventory2 = createInventory(shoeCode2, stockCount3);
+        Inventory inventory3 = createInventory(shoeCode3, stockCount5);
+        given(inventoryRepository.findAllByShoeCodes(anyList()))
+            .willReturn(List.of(inventory1, inventory2, inventory3));
 
         // when
         Long countOfShoeCode1 = 2L;
@@ -158,6 +177,11 @@ class OrderServiceTest {
         given(paymentRepository.saveAll(anyList()))
             .willAnswer(invocation -> invocation.getArgument(0));
 
+        Inventory inventory1 = createInventory(shoeCode1, stockCount2);
+        Inventory inventory2 = createInventory(shoeCode2, stockCount3);
+        Inventory inventory3 = createInventory(shoeCode3, stockCount5);
+        given(inventoryRepository.findAllByShoeCodes(anyList()))
+            .willReturn(List.of(inventory1, inventory2, inventory3));
 
         // when
         Long countOfShoeCode1 = 2L;
@@ -226,6 +250,11 @@ class OrderServiceTest {
         given(paymentRepository.saveAll(anyList()))
             .willAnswer(invocation -> invocation.getArgument(0));
 
+        Inventory inventory1 = createInventory(shoeCode1, stockCount2);
+        Inventory inventory2 = createInventory(shoeCode2, stockCount3);
+        Inventory inventory3 = createInventory(shoeCode3, stockCount5);
+        given(inventoryRepository.findAllByShoeCodes(anyList()))
+            .willReturn(List.of(inventory1, inventory2, inventory3));
 
         // when
         Long countOfShoeCode1 = 2L;
@@ -286,6 +315,42 @@ class OrderServiceTest {
     }
 
     @Test
+    @DisplayName("재고보다 많은 상품을 주문할 때 에러가 발생하는지 확인한다.")
+    void checkExceptionWhenInsufficientStock() {
+
+        // given
+        List<Shoe> shoeEntities = List.of(shoe1, shoe2, shoe3);
+
+        given(shoeRepository.findAllByShoeCodes(anyList())).willReturn(shoeEntities);
+
+        Inventory inventory1 = createInventory(shoeCode1, stockCount2);
+        Inventory inventory2 = createInventory(shoeCode2, stockCount3);
+        Inventory inventory3 = createInventory(shoeCode3, stockCount4);
+        given(inventoryRepository.findAllByShoeCodes(anyList()))
+            .willReturn(List.of(inventory1, inventory2, inventory3));
+
+        // when
+        Long countOfShoeCode1 = 2L;
+        Long countOfShoeCode2 = 3L;
+        Long countOfShoeCode3 = 5L;
+
+        List<CreateOrderDetailRequest> orderDetailRequests = List.of(
+            new CreateOrderDetailRequest(shoeCode1, countOfShoeCode1),
+            new CreateOrderDetailRequest(shoeCode2, countOfShoeCode2),
+            new CreateOrderDetailRequest(shoeCode3, countOfShoeCode3)
+        );
+        BigDecimal totalPrice = shoe1.getPrice().add(shoe2.getPrice()).add(shoe3.getPrice());
+        List<CreatePaymentRequest> paymentRequests = List.of(
+            new CreatePaymentRequest(PaymentType.CASH, null, totalPrice));
+        CreateOrderRequest request = new CreateOrderRequest(orderDetailRequests, paymentRequests);
+
+        // then
+        assertThatThrownBy(() -> orderFacadeService.createOrder(request))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("The stock is insufficient.");
+    }
+
+    @Test
     @DisplayName("주문 취소가 가능한지 확인한다.")
     void cancelOrder() {
 
@@ -298,10 +363,8 @@ class OrderServiceTest {
         given(orderRepository.save(any(Order.class)))
             .willAnswer(invocation -> invocation.getArgument(0));
 
-
         // when
         OrderDto orderDto = orderFacadeService.cancelOrder(orderNo1);
-
 
         // then
         assertThat(orderDto.getStatus()).isEqualTo(OrderStatus.CANCEL);

@@ -1,5 +1,7 @@
 package com.abcmart.shoestore.order.application;
 
+import com.abcmart.shoestore.inventory.domain.Inventory;
+import com.abcmart.shoestore.inventory.repository.InventoryRepository;
 import com.abcmart.shoestore.order.application.request.CreateOrderRequest;
 import com.abcmart.shoestore.order.application.request.CreateOrderRequest.CreateOrderDetailRequest;
 import com.abcmart.shoestore.order.domain.Order;
@@ -7,6 +9,7 @@ import com.abcmart.shoestore.order.domain.OrderDetail;
 import com.abcmart.shoestore.order.repository.OrderRepository;
 import com.abcmart.shoestore.shoe.domain.Shoe;
 import com.abcmart.shoestore.shoe.repository.ShoeRepository;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -22,6 +25,7 @@ public class OrderService {
 
     private final ShoeRepository shoeRepository;
     private final OrderRepository orderRepository;
+    private final InventoryRepository inventoryRepository;
 
     @Transactional
     public Order findOrderByOrderNo(Long orderNo) {
@@ -38,22 +42,37 @@ public class OrderService {
             .map(CreateOrderRequest.CreateOrderDetailRequest::getShoeCode).toList();
         Map<Long, Shoe> shoeMap = shoeRepository.findAllByShoeCodes(shoeCodes).stream()
             .collect(Collectors.toMap(Shoe::getShoeCode, Function.identity()));
+        shoeCodes = shoeMap.keySet().stream().toList();
+
+        Map<Long, Inventory> inventoryMap = inventoryRepository.findAllByShoeCodes(shoeCodes)
+            .stream()
+            .collect(Collectors.toMap(Inventory::getShoeCode, Function.identity()));
 
         // 주문 항목 생성
-        List<OrderDetail> details = orderDetailRequests.stream()
-            .filter(requestedDetail -> Objects.nonNull(shoeMap.get(requestedDetail.getShoeCode())))
-            .map(requestedDetail ->
-                OrderDetail.create(
-                    requestedDetail.getShoeCode(),
-                    shoeMap.get(requestedDetail.getShoeCode()).getPrice(),
-                    requestedDetail.getCount()
-                )
-            )
-            .toList();
+        ArrayList<Inventory> updatedInventories = new ArrayList<>();
+        ArrayList<OrderDetail> details = new ArrayList<>();
+        for (CreateOrderDetailRequest requestedDetail : orderDetailRequests) {
+
+            if (Objects.isNull(shoeMap.get(requestedDetail.getShoeCode()))) continue;
+
+            Inventory inventory = inventoryMap.get(requestedDetail.getShoeCode());
+            if (inventory.getStock() < requestedDetail.getCount()) throw insufficientStockException();
+
+            OrderDetail orderDetail = OrderDetail.create(
+                requestedDetail.getShoeCode(),
+                shoeMap.get(requestedDetail.getShoeCode()).getPrice(),
+                requestedDetail.getCount()
+            );
+            inventory.deductStock(requestedDetail.getCount());
+            updatedInventories.add(inventory);
+            details.add(orderDetail);
+        }
 
         // 주문 생성 및 저장
         Order order = Order.create(details);
-        return orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
+        inventoryRepository.saveAll(updatedInventories);
+        return savedOrder;
     }
 
     @Transactional
@@ -82,6 +101,11 @@ public class OrderService {
 
     private static IllegalArgumentException orderNotFoundException() {
 
-        return new IllegalArgumentException("Order not found");
+        return new IllegalArgumentException("Order not found.");
+    }
+
+    private static IllegalArgumentException insufficientStockException() {
+
+        return new IllegalArgumentException("The stock is insufficient.");
     }
 }
