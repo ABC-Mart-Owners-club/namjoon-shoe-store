@@ -55,19 +55,17 @@ public class PaymentService {
 
         List<Payment> payments = paymentRepository.findAllByIds(paymentIds);
 
-        BigDecimal totalCancelAmount = cancelAmount;
-
         Optional<Payment> availablePayment = payments.stream()
-            .filter(payment -> payment.validateAvailableCancel(totalCancelAmount))
+            .filter(payment -> payment.validateAvailableCancel(cancelAmount))
             .findFirst();
         if (availablePayment.isPresent()) { // 취소 금액이 하나의 결제수단보다 작아 한번에 취소 가능한 경우
 
             Payment targetPayment = availablePayment.get();
-            targetPayment.partialCancel(totalCancelAmount);
+            targetPayment.partialCancel(cancelAmount);
 
         } else { // 취소 금액이 낱개의 결제수단들보다 커서 나눠서 취소해야하는 경우
 
-            BigDecimal remainCancelAmount = totalCancelAmount;
+            BigDecimal remainCancelAmount = cancelAmount;
             for (Payment payment : payments) {
                 BigDecimal cancelledAmount = payment.partialCancel(remainCancelAmount);
                 remainCancelAmount = remainCancelAmount.subtract(cancelledAmount);

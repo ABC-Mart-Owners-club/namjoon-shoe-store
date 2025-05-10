@@ -77,6 +77,7 @@ class OrderServiceTest {
     static final Shoe shoe2 = createShoeByShoeCode(shoeCode2);
     static final Shoe shoe3 = createShoeByShoeCode(shoeCode3);
 
+    static final Long stockCount0 = 0L;
     static final Long stockCount1 = 1L;
     static final Long stockCount2 = 2L;
     static final Long stockCount3 = 3L;

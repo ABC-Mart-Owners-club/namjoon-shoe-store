@@ -53,8 +53,10 @@ public class OrderService {
         ArrayList<OrderDetail> details = new ArrayList<>();
         for (CreateOrderDetailRequest requestedDetail : orderDetailRequests) {
 
+            // 가게에 안파는 신발 무시
             if (Objects.isNull(shoeMap.get(requestedDetail.getShoeCode()))) continue;
 
+            // 재고 확인 후 부족하면 Exception
             Inventory inventory = inventoryMap.get(requestedDetail.getShoeCode());
             if (inventory.getStock() < requestedDetail.getCount()) throw insufficientStockException();
 
