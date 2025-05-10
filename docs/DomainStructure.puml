@@ -1,7 +1,5 @@
 @startuml
 
-
-
 class Shoe {
 Long shoeCode
 String shoeName
@@ -20,43 +18,26 @@ class Order {
 Long orderNo
 OrderStatus status
 List<OrderDetail> details
-BigDecimal totalAmount
-Map<String, OrderPayment> orderPayments
+List<String> paymentIds
 + _create()
 + totalCancel()
 + partialCancel()
++ updatePaymentIds()
++ getCurrentTotalAmount()
 - validateAvailableCancel()
 - validateAllCancelled()
 }
 
 class OrderDetail {
 Long orderDetailNo
-OrderStatus orderStatus
+OrderStatus orderDetailStatus
 Long shoeCode
+BigDecimal unitPrice
 Long count
 + _create()
 # partialCancel()
 + isNormal()
 + isCancel()
-}
-
-abstract class OrderPayment {
-String id
-PaymentType type
-BigDecimal paidAmount
-# updatePaidAmount()
-+ updatePaidAmountToZero()
-+ validateAvailableCancel()
-+ partialCancel()
-}
-
-class CashPayment {
-+ _payInCash()
-}
-
-class CardPayment {
-CreditCardType creditCardType
-+ _payInCreditCard()
 }
 
 enum PaymentType {
@@ -75,10 +56,36 @@ HANA
 BC
 }
 
+abstract class Payment {
+String id
+PaymentType type
+BigDecimal paidAmount
+# updatePaidAmount()
++ updatePaidAmountToZero()
++ validateAvailableCancel()
++ partialCancel()
+}
+
+class CashPayment {
++ _payInCash()
+}
+
+class CardPayment {
+CreditCardType creditCardType
++ _payInCreditCard()
+}
+
+class Inventory {
+Long shoeCode
+Long stock
++ _create()
++ restock()
++ deductStock()
+}
 
 Order <-- OrderDetail
-Order <-- OrderPayment
-OrderPayment <-- CashPayment
-OrderPayment <-- CardPayment
+Payment <-- CashPayment
+Payment <-- CardPayment
+Inventory -- Shoe
 
 @enduml

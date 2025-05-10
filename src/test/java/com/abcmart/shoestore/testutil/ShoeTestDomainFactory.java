@@ -1,8 +1,6 @@
 package com.abcmart.shoestore.testutil;
 
-import com.abcmart.shoestore.domain.Shoe;
-import com.navercorp.fixturemonkey.FixtureMonkey;
-import com.navercorp.fixturemonkey.api.introspector.FieldReflectionArbitraryIntrospector;
+import com.abcmart.shoestore.shoe.domain.Shoe;
 import java.math.BigDecimal;
 import net.jqwik.api.Arbitraries;
 
