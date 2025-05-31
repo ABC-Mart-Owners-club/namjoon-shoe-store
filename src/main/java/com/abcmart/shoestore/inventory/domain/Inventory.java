@@ -39,4 +39,16 @@ public class Inventory {
         this.stock -= stock;
         return this;
     }
+
+    public void validateRequestStock(Long requestStock) {
+
+        if (this.stock < requestStock) {
+            throw insufficientStockException();
+        }
+    }
+
+    private static IllegalArgumentException insufficientStockException() {
+
+        return new IllegalArgumentException("The stock is insufficient.");
+    }
 }

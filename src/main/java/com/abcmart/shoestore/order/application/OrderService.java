@@ -58,7 +58,7 @@ public class OrderService {
 
             // 재고 확인 후 부족하면 Exception
             Inventory inventory = inventoryMap.get(requestedDetail.getShoeCode());
-            if (inventory.getStock() < requestedDetail.getCount()) throw insufficientStockException();
+            inventory.validateRequestStock(requestedDetail.getCount());
 
             OrderDetail orderDetail = OrderDetail.create(
                 requestedDetail.getShoeCode(),
@@ -104,10 +104,5 @@ public class OrderService {
     private static IllegalArgumentException orderNotFoundException() {
 
         return new IllegalArgumentException("Order not found.");
-    }
-
-    private static IllegalArgumentException insufficientStockException() {
-
-        return new IllegalArgumentException("The stock is insufficient.");
     }
 }
