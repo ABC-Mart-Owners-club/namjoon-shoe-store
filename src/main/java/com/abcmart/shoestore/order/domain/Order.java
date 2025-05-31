@@ -5,10 +5,6 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -52,10 +48,9 @@ public class Order {
 
         validateAvailableCancel();
 
-        Map<Long, OrderDetail> detailMap = this.details.stream()
-                .collect(Collectors.toMap(OrderDetail::getShoeCode, Function.identity()));
-
-        OrderDetail orderDetail = Optional.ofNullable(detailMap.get(shoeCode))
+        OrderDetail orderDetail = this.details.stream()
+            .filter(detail -> detail.getShoeCode().equals(shoeCode))
+            .findFirst()
             .orElseThrow(() -> new IllegalArgumentException("ShoeCode not found in order details"));
 
         BigDecimal cancelledAmount = orderDetail.partialCancel(removeCount);
