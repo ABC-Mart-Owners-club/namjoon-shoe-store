@@ -76,6 +76,11 @@ public class Order {
             .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+    public BigDecimal getAmountToCancel(BigDecimal cancelledAmount) {
+
+        return getCurrentTotalAmount().subtract(cancelledAmount);
+    }
+
     private void validateAvailableCancel() {
 
         if (this.status.isCancel()) {

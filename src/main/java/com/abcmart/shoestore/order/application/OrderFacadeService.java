@@ -43,10 +43,9 @@ public class OrderFacadeService {
         Order storedOrder = orderService.findOrderByOrderNo(orderNo);
         Order partialCancelledOrder = orderService.partialCancel(orderNo, shoeCode, removeCount);
 
-        BigDecimal cancelledAmount = storedOrder.getCurrentTotalAmount()
-            .subtract(partialCancelledOrder.getCurrentTotalAmount());
+        BigDecimal cancelTargetAmount = storedOrder.getAmountToCancel(partialCancelledOrder.getCurrentTotalAmount());
         List<Payment> cancelledPayments = paymentService.partialCancel(
-            partialCancelledOrder.getPaymentIds(), cancelledAmount
+            partialCancelledOrder.getPaymentIds(), cancelTargetAmount
         );
         return OrderDto.from(partialCancelledOrder, cancelledPayments);
     }
