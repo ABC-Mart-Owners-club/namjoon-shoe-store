@@ -47,6 +47,11 @@ public class Inventory {
         }
     }
 
+    public static IllegalArgumentException inventoryNotFoundException() {
+
+        return new IllegalArgumentException("Inventory not found");
+    }
+
     private static IllegalArgumentException insufficientStockException() {
 
         return new IllegalArgumentException("The stock is insufficient.");

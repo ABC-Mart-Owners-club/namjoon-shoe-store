@@ -83,6 +83,16 @@ public class OrderService {
         Order order = orderRepository.findByOrderNo(orderNo)
             .orElseThrow(OrderService::orderNotFoundException);
         order.totalCancel();
+
+        for (OrderDetail orderDetail : order.getDetails()) {
+
+            Long shoeCode = orderDetail.getShoeCode();
+            Inventory inventory = inventoryRepository.findByShoeCode(shoeCode)
+                .orElseThrow(Inventory::inventoryNotFoundException);
+            inventory.restock(orderDetail.getCount());
+            inventoryRepository.save(inventory);
+        }
+
         return orderRepository.save(order);
     }
 
@@ -92,6 +102,12 @@ public class OrderService {
         Order order = orderRepository.findByOrderNo(orderNo)
             .orElseThrow(OrderService::orderNotFoundException);
         order.partialCancel(shoeCode, removeCount);
+
+        Inventory inventory = inventoryRepository.findByShoeCode(shoeCode)
+            .orElseThrow(Inventory::inventoryNotFoundException);
+        inventory.restock(removeCount);
+        inventoryRepository.save(inventory);
+
         return orderRepository.save(order);
     }
 

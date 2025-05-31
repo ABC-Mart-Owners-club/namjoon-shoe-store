@@ -96,7 +96,7 @@ public class AdminService {
             .orElseThrow(() -> new IllegalArgumentException("There are no such shoes."));
 
         Inventory inventory = inventoryRepository.findByShoeCode(shoeCode)
-            .orElseThrow(() -> new IllegalArgumentException("We don't sell those shoes in our store."));
+            .orElseThrow(Inventory::inventoryNotFoundException);
 
         return ShoeStockResponse.of(shoe, inventory);
     }

@@ -364,6 +364,12 @@ class OrderServiceTest {
         given(orderRepository.save(any(Order.class)))
             .willAnswer(invocation -> invocation.getArgument(0));
 
+        Inventory inventory1 = createInventory(shoeCode1, 5L);
+
+        given(inventoryRepository.findByShoeCode(any())).willReturn(Optional.of(inventory1));
+        given(inventoryRepository.save(any(Inventory.class)))
+            .willAnswer(invocation -> invocation.getArgument(0));
+
         // when
         OrderDto orderDto = orderFacadeService.cancelOrder(orderNo1);
 
@@ -380,9 +386,14 @@ class OrderServiceTest {
         List<Payment> payments = List.of(createCash(), createCreditCard());
         Order order = createOrderBy(orderNo1, List.of(orderDetail), payments);
 
-
         given(orderRepository.findByOrderNo(any())).willReturn(Optional.of(order));
         given(orderRepository.save(any(Order.class)))
+            .willAnswer(invocation -> invocation.getArgument(0));
+
+        Inventory inventory1 = createInventory(shoeCode1, 5L);
+
+        given(inventoryRepository.findByShoeCode(any())).willReturn(Optional.of(inventory1));
+        given(inventoryRepository.save(any(Inventory.class)))
             .willAnswer(invocation -> invocation.getArgument(0));
 
 
@@ -411,6 +422,12 @@ class OrderServiceTest {
 
         given(orderRepository.findByOrderNo(any())).willReturn(Optional.of(order));
         given(orderRepository.save(any(Order.class)))
+            .willAnswer(invocation -> invocation.getArgument(0));
+
+        Inventory inventory1 = createInventory(shoeCode1, 5L);
+
+        given(inventoryRepository.findByShoeCode(any())).willReturn(Optional.of(inventory1));
+        given(inventoryRepository.save(any(Inventory.class)))
             .willAnswer(invocation -> invocation.getArgument(0));
 
 
