@@ -1,9 +1,10 @@
 package com.abcmart.shoestore.testutil;
 
-import com.abcmart.shoestore.domain.Order;
-import com.abcmart.shoestore.domain.OrderDetail;
-import com.abcmart.shoestore.domain.OrderPayment;
-import com.abcmart.shoestore.tool.OrderStatus;
+import com.abcmart.shoestore.order.domain.Order;
+import com.abcmart.shoestore.order.domain.OrderDetail;
+import com.abcmart.shoestore.order.domain.OrderStatus;
+import com.abcmart.shoestore.payment.domain.Payment;
+import com.abcmart.shoestore.shoe.domain.Shoe;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -19,24 +20,25 @@ public class OrderTestDomainFactory extends TestDomainFactory<Order> {
             .sample();
     }
 
-    public static Order createOrderBy(Long orderNo, List<OrderDetail> orderDetails, List<OrderPayment> orderPayments) {
+    public static Order createOrderBy(Long orderNo, List<OrderDetail> orderDetails, List<Payment> payments) {
 
-        Map<String, OrderPayment> orderPaymentMap = orderPayments.stream()
-            .collect(Collectors.toMap(OrderPayment::getId, Function.identity()));
+        Map<String, Payment> paymentMap = payments.stream()
+            .collect(Collectors.toMap(Payment::getId, Function.identity()));
 
         return fixtureMonkey.giveMeBuilder(Order.class)
             .set("orderNo", orderNo)
             .set("status", OrderStatus.NORMAL)
             .set("details", orderDetails)
-            .set("orderPayments", orderPaymentMap)
+            .set("payments", paymentMap)
             .sample();
     }
 
-    public static OrderDetail createOrderDetail(Long shoeCode, Long count) {
+    public static OrderDetail createOrderDetail(Shoe shoe, Long count) {
 
         return fixtureMonkey.giveMeBuilder(OrderDetail.class)
-            .set("orderStatus", OrderStatus.NORMAL)
-            .set("shoeCode", shoeCode)
+            .set("orderDetailStatus", OrderStatus.NORMAL)
+            .set("shoeCode", shoe.getShoeCode())
+            .set("unitPrice", shoe.getPrice())
             .set("count", count)
             .sample();
     }
