@@ -18,7 +18,6 @@ class Order {
 Long orderNo
 OrderStatus status
 List<OrderDetail> details
-CouponDiscount couponDiscount
 List<String> paymentIds
 + _create()
 + totalCancel()
@@ -36,7 +35,7 @@ OrderStatus orderDetailStatus
 String shoeProductCode
 BigDecimal unitPrice
 Long count
-BigDecimal discountPrice
+List<DiscountPolicy> discounts
 + _create()
 + getShoeCode()
 + getPayAmount()
@@ -91,29 +90,35 @@ Long stock
 - validateRequestStock()
 }
 
-abstract class Discount {
+interface DiscountPolicy {
++ getDiscountType()
++ calculateDiscount()
+}
+
+class InventoryDiscountPolicy {
++ getDiscountType()
++ calculateDiscount()
+}
+
+class CouponDiscountPolicy {
+Coupon coupon
++ getDiscountType()
++ calculateDiscount()
+}
+
+class Coupon {
+String couponCode
 int discountRate
-+ _getDiscountType() {abstract}
-+ calculateDiscount() {abstract}
-}
-
-class InventoryDiscount {
-+ _getDiscountType()
-+ calculateDiscount()
-}
-
-class CouponDiscount {
 LocalDateTime createdAt
-+ _getDiscountType()
-+ calculateDiscount()
 }
 
 Order <-- OrderDetail
 Payment <-- CashPayment
 Payment <-- CardPayment
 Inventory -- Shoe
-Discount <-- InventoryDiscount
-Discount <-- CouponDiscount
-Order <-- CouponDiscount
+OrderDetail <-- DiscountPolicy
+DiscountPolicy <-- InventoryDiscountPolicy
+DiscountPolicy <-- CouponDiscountPolicy
+CouponDiscountPolicy <-- Coupon
 
 @enduml
