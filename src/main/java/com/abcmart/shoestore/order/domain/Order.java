@@ -1,5 +1,6 @@
 package com.abcmart.shoestore.order.domain;
 
+import com.abcmart.shoestore.order.domain.discount.OrderDetailDiscount;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -61,6 +62,16 @@ public class Order {
         return cancelledAmount;
     }
 
+    public void updateDetailDiscounts(List<OrderDetailDiscount> detailDiscounts) {
+
+        detailDiscounts.forEach(detailDiscount ->
+            details.stream()
+                .filter(detail -> detail.getOrderDetailNo().equals(detailDiscount.getOrderDetailNo()))
+                .findFirst()
+                .ifPresent(detail -> detail.applyDiscount(detailDiscount))
+        );
+    }
+
     public void updatePaymentIds(List<String> paymentIds) {
 
         this.paymentIds = paymentIds;
@@ -70,9 +81,7 @@ public class Order {
 
         return this.details.stream()
             .filter(OrderDetail::isNormal)
-            .map(orderDetail ->
-                orderDetail.getUnitPrice().multiply(BigDecimal.valueOf(orderDetail.getCount()))
-            )
+            .map(OrderDetail::getTotalAmount)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 

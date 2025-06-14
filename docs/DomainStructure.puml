@@ -22,6 +22,7 @@ List<String> paymentIds
 + _create()
 + totalCancel()
 + partialCancel()
++ updateDetailDiscounts()
 + updatePaymentIds()
 + getCurrentTotalAmount()
 + getAmountToCancel()
@@ -35,12 +36,16 @@ OrderStatus orderDetailStatus
 String shoeProductCode
 BigDecimal unitPrice
 Long count
-List<DiscountPolicy> discounts
+List<OrderDetailDiscount> discounts
 + _create()
 + getShoeCode()
-+ getPayAmount()
++ getStockedDate()
++ getTotalOriginAmount()
++ getTotalAmount()
++ getTotalDiscountAmount()
 # totalCancel()
 # partialCancel()
++ applyDiscount()
 + isNormal()
 + isCancel()
 }
@@ -92,31 +97,33 @@ Long stock
 
 interface DiscountPolicy {
 + getDiscountType()
-+ calculateDiscount()
++ apply()
 }
 
 class InventoryDiscountPolicy {
 + getDiscountType()
-+ calculateDiscount()
++ apply()
 }
 
 class CouponDiscountPolicy {
 Coupon coupon
++ of()
 + getDiscountType()
-+ calculateDiscount()
++ apply()
 }
 
 class Coupon {
 String couponCode
-int discountRate
+int discountPercent
 LocalDateTime createdAt
++ _create()
++ getDiscountRate()
 }
 
 Order <-- OrderDetail
 Payment <-- CashPayment
 Payment <-- CardPayment
 Inventory -- Shoe
-OrderDetail <-- DiscountPolicy
 DiscountPolicy <-- InventoryDiscountPolicy
 DiscountPolicy <-- CouponDiscountPolicy
 CouponDiscountPolicy <-- Coupon

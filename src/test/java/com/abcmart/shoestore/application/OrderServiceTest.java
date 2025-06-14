@@ -12,6 +12,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
 
+import com.abcmart.shoestore.coupon.application.CouponService;
+import com.abcmart.shoestore.coupon.repository.CouponRepository;
+import com.abcmart.shoestore.discount.application.DiscountService;
+import com.abcmart.shoestore.discount.domain.policy.InventoryDiscountPolicy;
 import com.abcmart.shoestore.inventory.application.InventoryService;
 import com.abcmart.shoestore.inventory.domain.Inventory;
 import com.abcmart.shoestore.inventory.repository.InventoryRepository;
@@ -58,6 +62,9 @@ class OrderServiceTest {
     private OrderRepository orderRepository;
 
     @Mock
+    private CouponRepository couponRepository;
+
+    @Mock
     private PaymentRepository paymentRepository;
 
     @Mock
@@ -65,6 +72,8 @@ class OrderServiceTest {
 
     private InventoryService inventoryService;
     private OrderService orderService;
+    private CouponService  couponService;
+    private DiscountService discountService;
     private PaymentService paymentService;
 
     @InjectMocks
@@ -98,8 +107,12 @@ class OrderServiceTest {
 
         inventoryService = new InventoryService(inventoryRepository);
         orderService = new OrderService(shoeRepository, orderRepository, inventoryRepository);
+        couponService = new CouponService(couponRepository);
+        discountService = new DiscountService(List.of(new InventoryDiscountPolicy()));
         paymentService = new PaymentService(paymentRepository);
-        orderFacadeService = new OrderFacadeService(inventoryService, orderService, paymentService);
+        orderFacadeService = new OrderFacadeService(
+            inventoryService, orderService, couponService, discountService, paymentService
+        );
     }
 
     @Test
@@ -140,7 +153,7 @@ class OrderServiceTest {
         BigDecimal totalPrice = shoe1.getPrice().add(shoe2.getPrice()).add(shoe3.getPrice());
         List<CreatePaymentRequest> paymentRequests = List.of(
             new CreatePaymentRequest(PaymentType.CASH, null, totalPrice));
-        CreateOrderRequest request = new CreateOrderRequest(orderDetailRequests, paymentRequests);
+        CreateOrderRequest request = new CreateOrderRequest(orderDetailRequests, null, paymentRequests);
 
         OrderDto result = orderFacadeService.createOrder(request);
 
@@ -219,7 +232,7 @@ class OrderServiceTest {
         BigDecimal totalPrice = shoe1.getPrice().add(shoe2.getPrice()).add(shoe3.getPrice());
         List<CreatePaymentRequest> paymentRequests = List.of(
             new CreatePaymentRequest(PaymentType.CREDIT_CARD, CreditCardType.HYUNDAI, totalPrice));
-        CreateOrderRequest request = new CreateOrderRequest(orderDetailRequests, paymentRequests);
+        CreateOrderRequest request = new CreateOrderRequest(orderDetailRequests, null, paymentRequests);
 
         OrderDto result = orderFacadeService.createOrder(request);
 
@@ -302,7 +315,7 @@ class OrderServiceTest {
             new CreatePaymentRequest(PaymentType.CASH, null, firstPaymentPrice),
             new CreatePaymentRequest(PaymentType.CREDIT_CARD, CreditCardType.HYUNDAI, secondPaymentPrice)
         );
-        CreateOrderRequest request = new CreateOrderRequest(orderDetailRequests, paymentRequests);
+        CreateOrderRequest request = new CreateOrderRequest(orderDetailRequests, null, paymentRequests);
 
         OrderDto result = orderFacadeService.createOrder(request);
 
@@ -373,7 +386,7 @@ class OrderServiceTest {
         BigDecimal totalPrice = shoe1.getPrice().add(shoe2.getPrice()).add(shoe3.getPrice());
         List<CreatePaymentRequest> paymentRequests = List.of(
             new CreatePaymentRequest(PaymentType.CASH, null, totalPrice));
-        CreateOrderRequest request = new CreateOrderRequest(orderDetailRequests, paymentRequests);
+        CreateOrderRequest request = new CreateOrderRequest(orderDetailRequests, null, paymentRequests);
 
         // then
         assertThatThrownBy(() -> orderFacadeService.createOrder(request))

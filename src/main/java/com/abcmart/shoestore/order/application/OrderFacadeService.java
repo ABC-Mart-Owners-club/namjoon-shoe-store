@@ -1,13 +1,20 @@
 package com.abcmart.shoestore.order.application;
 
+import com.abcmart.shoestore.coupon.application.CouponService;
+import com.abcmart.shoestore.coupon.domain.Coupon;
+import com.abcmart.shoestore.discount.application.DiscountService;
+import com.abcmart.shoestore.discount.domain.DiscountPolicy;
+import com.abcmart.shoestore.discount.domain.policy.CouponDiscountPolicy;
 import com.abcmart.shoestore.inventory.application.InventoryService;
 import com.abcmart.shoestore.inventory.dto.AvailableDeductionStock;
 import com.abcmart.shoestore.order.application.request.CreateOrderRequest;
 import com.abcmart.shoestore.order.domain.Order;
+import com.abcmart.shoestore.order.domain.discount.OrderDetailDiscount;
 import com.abcmart.shoestore.order.dto.OrderDto;
 import com.abcmart.shoestore.payment.application.PaymentService;
 import com.abcmart.shoestore.payment.domain.Payment;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +27,8 @@ public class OrderFacadeService {
 
     private final InventoryService inventoryService;
     private final OrderService orderService;
+    private final CouponService couponService;
+    private final DiscountService discountService;
     private final PaymentService paymentService;
 
     @Transactional
@@ -33,6 +42,17 @@ public class OrderFacadeService {
 
         // 주문 생성
         Order order = orderService.createOrder(availableStockMap);
+
+        List<DiscountPolicy> dynamicDiscountPolicies = new ArrayList<>();
+        if (request.existCoupon()) {
+
+            Coupon coupon = couponService.findByCode(request.couponCode());
+            dynamicDiscountPolicies.add(CouponDiscountPolicy.of(coupon));
+        }
+        List<OrderDetailDiscount> orderDetailDiscounts = discountService.applyDiscounts(
+            order, dynamicDiscountPolicies
+        );
+        order.updateDetailDiscounts(orderDetailDiscounts);
 
         // 결제 데이터 생성
         List<Payment> payments = paymentService.createPayment(request.payments());
