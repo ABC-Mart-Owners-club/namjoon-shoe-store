@@ -37,21 +37,21 @@ public class InventoryService {
         List<CreateOrderDetailRequest> orderDetails
     ) {
 
-        List<Long> shoeCodes = orderDetails.stream().map(CreateOrderDetailRequest::getShoeCode).toList();
+        List<Long> shoeCodes = orderDetails.stream().map(CreateOrderDetailRequest::shoeCode).toList();
         Map<Long, List<Inventory>> inventoriesMap = inventoryRepository.findAllByShoeCodes(shoeCodes);
 
         Map<Long, List<AvailableDeductionStock>> deductionResultMap = new HashMap<>();
         for (CreateOrderDetailRequest orderDetail : orderDetails) {
 
-            List<Inventory> inventories = inventoriesMap.get(orderDetail.getShoeCode());
+            List<Inventory> inventories = inventoriesMap.get(orderDetail.shoeCode());
             if (Objects.isNull(inventories)) {
                 throw Inventory.insufficientStockException();
             }
 
-            validateAvailableUseStock(inventories, orderDetail.getCount());
+            validateAvailableUseStock(inventories, orderDetail.count());
             deductionResultMap.put(
-                orderDetail.getShoeCode(),
-                deductStockAndSave(inventories, orderDetail.getCount())
+                orderDetail.shoeCode(),
+                deductStockAndSave(inventories, orderDetail.count())
             );
         }
 

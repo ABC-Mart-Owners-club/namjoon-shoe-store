@@ -28,14 +28,14 @@ public class OrderFacadeService {
         // 재고 준비 및 재고 수량 감소
         Map<Long, List<AvailableDeductionStock>> availableStockMap =
             inventoryService.deductStockAndFindAvailableOrElseThrow(
-                request.getOrderDetails()
+                request.orderDetails()
             );
 
         // 주문 생성
         Order order = orderService.createOrder(availableStockMap);
 
         // 결제 데이터 생성
-        List<Payment> payments = paymentService.createPayment(request.getPayments());
+        List<Payment> payments = paymentService.createPayment(request.payments());
 
         // 주문에 결제 데이터 첨부
         order.updatePaymentIds(payments.stream().map(Payment::getId).toList());
