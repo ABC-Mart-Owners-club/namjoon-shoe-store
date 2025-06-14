@@ -1,8 +1,13 @@
 package com.abcmart.shoestore.order.domain;
 
+import com.abcmart.shoestore.order.domain.discount.OrderDetailDiscount;
+import com.abcmart.shoestore.utils.ShoeProductCodeUtils;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -17,7 +22,7 @@ public class OrderDetail {
     private OrderStatus orderDetailStatus;
 
     @NotNull
-    private Long shoeCode;
+    private String shoeProductCode;
 
     @NotNull
     private BigDecimal unitPrice;
@@ -25,19 +30,49 @@ public class OrderDetail {
     @NotNull
     private Long count;
 
+    private List<OrderDetailDiscount> discounts = new ArrayList<>();
+
     //region Constructor
-    private OrderDetail(Long shoeCode, BigDecimal unitPrice, Long count) {
+    private OrderDetail(Long shoeCode, LocalDate stockedDate, BigDecimal unitPrice, Long count) {
 
         this.orderDetailStatus = OrderStatus.NORMAL;
-        this.shoeCode = shoeCode;
+        this.shoeProductCode = ShoeProductCodeUtils.generate(shoeCode, stockedDate);
         this.unitPrice = unitPrice;
         this.count = count;
     }
     //endregion
 
-    public static OrderDetail create(Long shoeCode, BigDecimal unitPrice, Long count) {
+    public Long getShoeCode() {
 
-        return new OrderDetail(shoeCode, unitPrice, count);
+        return ShoeProductCodeUtils.parse(shoeProductCode).shoeCode();
+    }
+
+    public LocalDate getStockedDate() {
+
+        return ShoeProductCodeUtils.parse(shoeProductCode).stockedDate();
+    }
+
+    public BigDecimal getTotalOriginAmount() {
+
+        return unitPrice.multiply(BigDecimal.valueOf(count));
+    }
+
+    public BigDecimal getTotalAmount() {
+
+        BigDecimal originAmount = unitPrice.multiply(BigDecimal.valueOf(count));
+        return originAmount.subtract(getTotalDiscountAmount());
+    }
+
+    public BigDecimal getTotalDiscountAmount() {
+
+        return discounts.stream()
+            .map(OrderDetailDiscount::getDiscountedAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public static OrderDetail create(Long shoeCode, LocalDate stockedDate, BigDecimal unitPrice, Long count) {
+
+        return new OrderDetail(shoeCode, stockedDate, unitPrice, count);
     }
 
     protected OrderDetail totalCancel() {
@@ -58,6 +93,11 @@ public class OrderDetail {
             this.orderDetailStatus = OrderStatus.CANCEL;
         }
         return this.unitPrice.multiply(BigDecimal.valueOf(removeCount));
+    }
+
+    public void applyDiscount(OrderDetailDiscount discount) {
+
+        this.discounts.add(discount);
     }
 
     public boolean isNormal() {

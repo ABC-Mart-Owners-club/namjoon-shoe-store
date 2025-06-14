@@ -22,8 +22,10 @@ List<String> paymentIds
 + _create()
 + totalCancel()
 + partialCancel()
++ updateDetailDiscounts()
 + updatePaymentIds()
 + getCurrentTotalAmount()
++ getAmountToCancel()
 - validateAvailableCancel()
 - validateAllCancelled()
 }
@@ -31,11 +33,19 @@ List<String> paymentIds
 class OrderDetail {
 Long orderDetailNo
 OrderStatus orderDetailStatus
-Long shoeCode
+String shoeProductCode
 BigDecimal unitPrice
 Long count
+List<OrderDetailDiscount> discounts
 + _create()
++ getShoeCode()
++ getStockedDate()
++ getTotalOriginAmount()
++ getTotalAmount()
++ getTotalDiscountAmount()
+# totalCancel()
 # partialCancel()
++ applyDiscount()
 + isNormal()
 + isCancel()
 }
@@ -77,15 +87,45 @@ CreditCardType creditCardType
 
 class Inventory {
 Long shoeCode
+LocalDate stockedDate
 Long stock
 + _create()
 + restock()
 + deductStock()
+- validateRequestStock()
+}
+
+interface DiscountPolicy {
++ getDiscountType()
++ apply()
+}
+
+class InventoryDiscountPolicy {
++ getDiscountType()
++ apply()
+}
+
+class CouponDiscountPolicy {
+Coupon coupon
++ of()
++ getDiscountType()
++ apply()
+}
+
+class Coupon {
+String couponCode
+int discountPercent
+LocalDateTime createdAt
++ _create()
++ getDiscountRate()
 }
 
 Order <-- OrderDetail
 Payment <-- CashPayment
 Payment <-- CardPayment
 Inventory -- Shoe
+DiscountPolicy <-- InventoryDiscountPolicy
+DiscountPolicy <-- CouponDiscountPolicy
+CouponDiscountPolicy <-- Coupon
 
 @enduml

@@ -23,12 +23,12 @@ public class PaymentService {
 
         List<Payment> paymentList = requests.stream()
             .map(requestedPayment -> {
-                if (requestedPayment.getPaymentType().isCash()) {
-                    return CashPayment.payInCash(requestedPayment.getPaidAmount());
+                if (requestedPayment.paymentType().isCash()) {
+                    return CashPayment.payInCash(requestedPayment.paidAmount());
                 }
                 return CardPayment.payInCreditCard(
-                    requestedPayment.getCreditCardType(),
-                    requestedPayment.getPaidAmount()
+                    requestedPayment.creditCardType(),
+                    requestedPayment.paidAmount()
                 );
             })
             .toList();
