@@ -18,6 +18,7 @@ class Order {
 Long orderNo
 OrderStatus status
 List<OrderDetail> details
+CouponDiscount couponDiscount
 List<String> paymentIds
 + _create()
 + totalCancel()
@@ -35,8 +36,10 @@ OrderStatus orderDetailStatus
 String shoeProductCode
 BigDecimal unitPrice
 Long count
-+ getShoeCode()
+BigDecimal discountPrice
 + _create()
++ getShoeCode()
++ getPayAmount()
 # totalCancel()
 # partialCancel()
 + isNormal()
@@ -88,9 +91,29 @@ Long stock
 - validateRequestStock()
 }
 
+abstract class Discount {
+int discountRate
++ _getDiscountType() {abstract}
++ calculateDiscount() {abstract}
+}
+
+class InventoryDiscount {
++ _getDiscountType()
++ calculateDiscount()
+}
+
+class CouponDiscount {
+LocalDateTime createdAt
++ _getDiscountType()
++ calculateDiscount()
+}
+
 Order <-- OrderDetail
 Payment <-- CashPayment
 Payment <-- CardPayment
 Inventory -- Shoe
+Discount <-- InventoryDiscount
+Discount <-- CouponDiscount
+Order <-- CouponDiscount
 
 @enduml
