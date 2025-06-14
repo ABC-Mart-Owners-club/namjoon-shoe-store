@@ -1,8 +1,10 @@
 package com.abcmart.shoestore.order.domain;
 
+import com.abcmart.shoestore.utils.ShoeProductCodeUtils;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -17,7 +19,7 @@ public class OrderDetail {
     private OrderStatus orderDetailStatus;
 
     @NotNull
-    private Long shoeCode;
+    private String shoeProductCode;
 
     @NotNull
     private BigDecimal unitPrice;
@@ -26,18 +28,23 @@ public class OrderDetail {
     private Long count;
 
     //region Constructor
-    private OrderDetail(Long shoeCode, BigDecimal unitPrice, Long count) {
+    private OrderDetail(Long shoeCode, LocalDate stockedDate, BigDecimal unitPrice, Long count) {
 
         this.orderDetailStatus = OrderStatus.NORMAL;
-        this.shoeCode = shoeCode;
+        this.shoeProductCode = ShoeProductCodeUtils.generate(shoeCode, stockedDate);
         this.unitPrice = unitPrice;
         this.count = count;
     }
     //endregion
 
-    public static OrderDetail create(Long shoeCode, BigDecimal unitPrice, Long count) {
+    public Long getShoeCode() {
 
-        return new OrderDetail(shoeCode, unitPrice, count);
+        return ShoeProductCodeUtils.parse(shoeProductCode).shoeCode();
+    }
+
+    public static OrderDetail create(Long shoeCode, LocalDate stockedDate, BigDecimal unitPrice, Long count) {
+
+        return new OrderDetail(shoeCode, stockedDate, unitPrice, count);
     }
 
     protected OrderDetail totalCancel() {

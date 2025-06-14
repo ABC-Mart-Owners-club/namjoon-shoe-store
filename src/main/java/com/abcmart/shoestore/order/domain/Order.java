@@ -44,12 +44,12 @@ public class Order {
         this.details.forEach(OrderDetail::totalCancel);
     }
 
-    public BigDecimal partialCancel(Long shoeCode, Long removeCount) {
+    public BigDecimal partialCancel(String shoeProductCode, Long removeCount) {
 
         validateAvailableCancel();
 
         OrderDetail orderDetail = this.details.stream()
-            .filter(detail -> detail.getShoeCode().equals(shoeCode))
+            .filter(detail -> detail.getShoeProductCode().equals(shoeProductCode))
             .findFirst()
             .orElseThrow(() -> new IllegalArgumentException("ShoeCode not found in order details"));
 

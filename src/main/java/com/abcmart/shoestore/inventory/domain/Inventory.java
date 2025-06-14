@@ -2,6 +2,7 @@ package com.abcmart.shoestore.inventory.domain;
 
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotNull;
+import java.time.LocalDate;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -13,19 +14,23 @@ public class Inventory {
     private Long shoeCode;
 
     @NotNull
+    private LocalDate stockedDate;
+
+    @NotNull
     private Long stock;
 
     //region Constructor
-    private Inventory(Long shoeCode, Long stock) {
+    private Inventory(Long shoeCode, LocalDate stockedDate, Long stock) {
 
         this.shoeCode = shoeCode;
+        this.stockedDate = stockedDate;
         this.stock = stock;
     }
     //endregion
 
     public static Inventory create(Long shoeCode, Long stock) {
 
-        return new Inventory(shoeCode, stock);
+        return new Inventory(shoeCode, LocalDate.now(), stock);
     }
 
     public Inventory restock(Long stock) {
@@ -34,15 +39,17 @@ public class Inventory {
         return this;
     }
 
-    public Inventory deductStock(Long stock) {
+    public Long deductStock(Long requestedQuantity) {
 
-        this.stock -= stock;
-        return this;
+        validateRequestStock(requestedQuantity);
+        long deducted = Math.min(this.stock, requestedQuantity);
+        this.stock -= deducted;
+        return deducted;
     }
 
-    public void validateRequestStock(Long requestStock) {
+    private void validateRequestStock(Long requestedQuantity) {
 
-        if (this.stock < requestStock) {
+        if (this.stock < requestedQuantity) {
             throw insufficientStockException();
         }
     }
@@ -52,7 +59,7 @@ public class Inventory {
         return new IllegalArgumentException("Inventory not found");
     }
 
-    private static IllegalArgumentException insufficientStockException() {
+    public static IllegalArgumentException insufficientStockException() {
 
         return new IllegalArgumentException("The stock is insufficient.");
     }

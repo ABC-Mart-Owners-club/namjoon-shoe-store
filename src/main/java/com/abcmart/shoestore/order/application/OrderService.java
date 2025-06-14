@@ -1,18 +1,20 @@
 package com.abcmart.shoestore.order.application;
 
 import com.abcmart.shoestore.inventory.domain.Inventory;
+import com.abcmart.shoestore.inventory.dto.AvailableDeductionStock;
 import com.abcmart.shoestore.inventory.repository.InventoryRepository;
-import com.abcmart.shoestore.order.application.request.CreateOrderRequest;
-import com.abcmart.shoestore.order.application.request.CreateOrderRequest.CreateOrderDetailRequest;
 import com.abcmart.shoestore.order.domain.Order;
 import com.abcmart.shoestore.order.domain.OrderDetail;
 import com.abcmart.shoestore.order.repository.OrderRepository;
 import com.abcmart.shoestore.shoe.domain.Shoe;
 import com.abcmart.shoestore.shoe.repository.ShoeRepository;
+import com.abcmart.shoestore.utils.ShoeProductCodeUtils;
+import com.abcmart.shoestore.utils.ShoeProductCodeUtils.ParsedResult;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -35,46 +37,30 @@ public class OrderService {
     }
 
     @Transactional
-    public Order createOrder(List<CreateOrderDetailRequest> orderDetailRequests) {
+    public Order createOrder(Map<Long, List<AvailableDeductionStock>> availableStockMap) {
 
         // 주문을 원하는 신발의 가격 조회
-        List<Long> shoeCodes = orderDetailRequests.stream()
-            .map(CreateOrderRequest.CreateOrderDetailRequest::getShoeCode).toList();
+        List<Long> shoeCodes = availableStockMap.keySet().stream().toList();
         Map<Long, Shoe> shoeMap = shoeRepository.findAllByShoeCodes(shoeCodes).stream()
             .collect(Collectors.toMap(Shoe::getShoeCode, Function.identity()));
-        shoeCodes = shoeMap.keySet().stream().toList();
 
-        Map<Long, Inventory> inventoryMap = inventoryRepository.findAllByShoeCodes(shoeCodes)
-            .stream()
-            .collect(Collectors.toMap(Inventory::getShoeCode, Function.identity()));
-
-        // 주문 항목 생성
-        ArrayList<Inventory> updatedInventories = new ArrayList<>();
         ArrayList<OrderDetail> details = new ArrayList<>();
-        for (CreateOrderDetailRequest requestedDetail : orderDetailRequests) {
+        for (Long shoeCode : shoeCodes) {
 
-            // 가게에 안파는 신발 무시
-            if (Objects.isNull(shoeMap.get(requestedDetail.getShoeCode()))) continue;
+            List<AvailableDeductionStock> availableShoeStockList = availableStockMap.get(shoeCode);
+            BigDecimal price = shoeMap.get(shoeCode).getPrice();
 
-            // 재고 확인 후 부족하면 Exception
-            Inventory inventory = inventoryMap.get(requestedDetail.getShoeCode());
-            inventory.validateRequestStock(requestedDetail.getCount());
-
-            OrderDetail orderDetail = OrderDetail.create(
-                requestedDetail.getShoeCode(),
-                shoeMap.get(requestedDetail.getShoeCode()).getPrice(),
-                requestedDetail.getCount()
-            );
-            inventory.deductStock(requestedDetail.getCount());
-            updatedInventories.add(inventory);
-            details.add(orderDetail);
+            List<OrderDetail> orderDetails = availableShoeStockList.stream()
+                .map(stock -> OrderDetail.create(
+                    shoeCode, stock.getStockedDate(), price, stock.getDeductedQuantity()
+                ))
+                .toList();
+            details.addAll(orderDetails);
         }
 
         // 주문 생성 및 저장
         Order order = Order.create(details);
-        Order savedOrder = orderRepository.save(order);
-        inventoryRepository.saveAll(updatedInventories);
-        return savedOrder;
+        return orderRepository.save(order);
     }
 
     @Transactional
@@ -86,8 +72,11 @@ public class OrderService {
 
         for (OrderDetail orderDetail : order.getDetails()) {
 
-            Long shoeCode = orderDetail.getShoeCode();
-            Inventory inventory = inventoryRepository.findByShoeCode(shoeCode)
+            ParsedResult parsedResult = ShoeProductCodeUtils.parse(orderDetail.getShoeProductCode());
+            Long shoeCode = parsedResult.shoeCode();
+            LocalDate stockedDate = parsedResult.stockedDate();
+
+            Inventory inventory = inventoryRepository.findByShoeCodeAndStockedDate(shoeCode, stockedDate)
                 .orElseThrow(Inventory::inventoryNotFoundException);
             inventory.restock(orderDetail.getCount());
             inventoryRepository.save(inventory);
@@ -97,13 +86,17 @@ public class OrderService {
     }
 
     @Transactional
-    public Order partialCancel(Long orderNo, Long shoeCode, Long removeCount) {
+    public Order partialCancel(Long orderNo, String shoeProductCode, Long removeCount) {
 
         Order order = orderRepository.findByOrderNo(orderNo)
             .orElseThrow(OrderService::orderNotFoundException);
-        order.partialCancel(shoeCode, removeCount);
+        order.partialCancel(shoeProductCode, removeCount);
 
-        Inventory inventory = inventoryRepository.findByShoeCode(shoeCode)
+        ParsedResult parsedResult = ShoeProductCodeUtils.parse(shoeProductCode);
+        Long shoeCode = parsedResult.shoeCode();
+        LocalDate stockedDate = parsedResult.stockedDate();
+
+        Inventory inventory = inventoryRepository.findByShoeCodeAndStockedDate(shoeCode, stockedDate)
             .orElseThrow(Inventory::inventoryNotFoundException);
         inventory.restock(removeCount);
         inventoryRepository.save(inventory);

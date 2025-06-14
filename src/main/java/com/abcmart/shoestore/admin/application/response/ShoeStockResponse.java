@@ -1,6 +1,5 @@
 package com.abcmart.shoestore.admin.application.response;
 
-import com.abcmart.shoestore.inventory.domain.Inventory;
 import com.abcmart.shoestore.shoe.domain.Shoe;
 import java.math.BigDecimal;
 
@@ -13,7 +12,7 @@ public record ShoeStockResponse(
     Long stock
 ) {
 
-    public static ShoeStockResponse of(Shoe shoe, Inventory inventory) {
+    public static ShoeStockResponse of(Shoe shoe, Long stock) {
 
         return new ShoeStockResponse(
             shoe.getShoeCode(),
@@ -21,7 +20,7 @@ public record ShoeStockResponse(
             shoe.getColor(),
             shoe.getSize(),
             shoe.getPrice(),
-            inventory.getStock()
+            stock
         );
     }
 }

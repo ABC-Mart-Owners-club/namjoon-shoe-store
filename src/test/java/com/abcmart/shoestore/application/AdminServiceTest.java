@@ -26,6 +26,7 @@ import com.abcmart.shoestore.payment.repository.PaymentRepository;
 import com.abcmart.shoestore.shoe.domain.Shoe;
 import com.abcmart.shoestore.shoe.repository.ShoeRepository;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
@@ -57,6 +58,10 @@ class AdminServiceTest {
     static final Long shoeCode2 = 2L;
     static final Long shoeCode3 = 3L;
 
+    static final LocalDate stockedDate1 = LocalDate.of(2025, 1, 1);
+    static final LocalDate stockedDate2 = LocalDate.of(2025, 3, 2);
+    static final LocalDate stockedDate3 = LocalDate.of(2025, 6, 8);
+
     @Test
     @DisplayName("신발 상품 별 판매 수량이 정상적으로 조회되는지 확인한다.")
     void getShoeSaleCount() {
@@ -72,9 +77,9 @@ class AdminServiceTest {
         long shoe1SaleCount = 2L;
         long shoe2SaleCount = 3L;
         long shoe3SaleCount = 5L;
-        OrderDetail orderDetail1 = createOrderDetail(shoe1, shoe1SaleCount);
-        OrderDetail orderDetail2 = createOrderDetail(shoe2, shoe2SaleCount);
-        OrderDetail orderDetail3 = createOrderDetail(shoe3, shoe3SaleCount);
+        OrderDetail orderDetail1 = createOrderDetail(shoe1, stockedDate1, shoe1SaleCount);
+        OrderDetail orderDetail2 = createOrderDetail(shoe2, stockedDate1, shoe2SaleCount);
+        OrderDetail orderDetail3 = createOrderDetail(shoe3, stockedDate1, shoe3SaleCount);
         List<OrderDetail> orderDetailList = List.of(
             orderDetail1, orderDetail2, orderDetail3
         );
@@ -147,9 +152,9 @@ class AdminServiceTest {
         // given
         Shoe shoe1 = createShoeByShoeCode(shoeCode1);
         Long stock = 10L;
-        Inventory shoe1Inventory = createInventory(shoeCode1, stock);
+        Inventory shoe1Inventory = createInventory(shoeCode1, stockedDate1, stock);
         given(shoeRepository.findByShoeCode(any())).willReturn(Optional.of(shoe1));
-        given(inventoryRepository.findByShoeCode(any())).willReturn(Optional.of(shoe1Inventory));
+        given(inventoryRepository.findByShoeCode(any())).willReturn(List.of(shoe1Inventory));
 
         // when
         ShoeStockResponse stockResponse = adminService.findInventoryByShoeCode(shoeCode1);
@@ -170,10 +175,10 @@ class AdminServiceTest {
         // given
         Shoe shoe1 = createShoeByShoeCode(shoeCode1);
         Long stock = 10L;
-        Inventory shoe1Inventory = createInventory(shoeCode1, stock);
+        Inventory shoe1Inventory = createInventory(shoeCode1, stockedDate1, stock);
         given(shoeRepository.findByShoeCode(shoeCode1)).willReturn(Optional.of(shoe1));
-        given(inventoryRepository.findByShoeCode(any())).willReturn(Optional.empty());
-        given(inventoryRepository.save(any(Inventory.class)))
+        given(inventoryRepository.findByShoeCode(any())).willReturn(List.of());
+        given(inventoryRepository.saveAll(anyList()))
             .willAnswer(invocation -> invocation.getArgument(0));
 
         // when
@@ -191,10 +196,10 @@ class AdminServiceTest {
         // given
         Shoe shoe1 = createShoeByShoeCode(shoeCode1);
         Long stock = 10L;
-        Inventory shoe1Inventory = createInventory(shoeCode1, stock);
+        Inventory shoe1Inventory = createInventory(shoeCode1, stockedDate1, stock);
         given(shoeRepository.findByShoeCode(shoeCode1)).willReturn(Optional.of(shoe1));
-        given(inventoryRepository.findByShoeCode(any())).willReturn(Optional.of(shoe1Inventory));
-        given(inventoryRepository.save(any(Inventory.class)))
+        given(inventoryRepository.findByShoeCode(any())).willReturn(List.of(shoe1Inventory));
+        given(inventoryRepository.saveAll(anyList()))
             .willAnswer(invocation -> invocation.getArgument(0));
 
         // when
@@ -202,6 +207,6 @@ class AdminServiceTest {
 
         // then
         assertThat(stockResponse.shoeCode()).isEqualTo(shoe1Inventory.getShoeCode());
-        assertThat(stockResponse.stock()).isEqualTo(shoe1Inventory.getStock());
+        assertThat(stockResponse.stock()).isEqualTo(shoe1Inventory.getStock() + stock);
     }
 }
