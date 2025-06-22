@@ -11,12 +11,15 @@ public class OrderDetailDiscount {
     private final DiscountType discountType;
     private final BigDecimal discountedAmount;
 
+    //region constructor
     public OrderDetailDiscount(Long orderDetailNo, DiscountType discountType,
         BigDecimal discountedAmount) {
+
         this.orderDetailNo = orderDetailNo;
         this.discountType = discountType;
         this.discountedAmount = discountedAmount;
     }
+    //endregion
 
     public static OrderDetailDiscount of(Long orderDetailNo, DiscountType type, BigDecimal amount) {
         return new OrderDetailDiscount(orderDetailNo, type, amount);
