@@ -1,11 +1,11 @@
 @startuml
 
 class Shoe {
-Long shoeCode
-String shoeName
-String color
-int size
-BigDecimal price
+Long shoeCode // 신발 코드
+String shoeName // 신발 이름
+String color // 신발 색상
+int size // 신발 사이즈
+BigDecimal price // 신발 가격
 + _create()
 }
 
@@ -15,10 +15,10 @@ CANCELLED
 }
 
 class Order {
-Long orderNo
-OrderStatus status
-List<OrderDetail> details
-List<String> paymentIds
+Long orderNo // 주문 번호
+OrderStatus status // 주문 상태
+List<OrderDetail> details // 주문 항목별 상세
+List<String> paymentIds // 결제 ID 목록
 + _create()
 + totalCancel()
 + partialCancel()
@@ -31,12 +31,12 @@ List<String> paymentIds
 }
 
 class OrderDetail {
-Long orderDetailNo
-OrderStatus orderDetailStatus
-String shoeProductCode
-BigDecimal unitPrice
-Long count
-List<OrderDetailDiscount> discounts
+Long orderDetailNo // 주문 상세 번호
+OrderStatus orderDetailStatus // 주문 상세 상태
+String shoeProductCode // 신발 상품 코드 [신발 코드 + 입고일자]
+BigDecimal unitPrice // 단위 가격
+Long count // 주문 수량
+List<OrderDetailDiscount> discounts // 할인된 가격 목록
 + _create()
 + getShoeCode()
 + getStockedDate()
@@ -48,6 +48,18 @@ List<OrderDetailDiscount> discounts
 + applyDiscount()
 + isNormal()
 + isCancel()
+}
+
+class OrderDetailDiscount {
+Long orderDetailNo // 주문 상세 번호
+DiscountType discountType // 할인 타입
+BigDecimal discountedAmount // 할인된 금액
++ _of()
+}
+
+enum DiscountType {
+Coupon
+INVENTORY
 }
 
 enum PaymentType {
@@ -67,9 +79,9 @@ BC
 }
 
 abstract class Payment {
-String id
-PaymentType type
-BigDecimal paidAmount
+String id // 결제 ID
+PaymentType type // 결제 타입
+BigDecimal paidAmount // 결제 금액
 # updatePaidAmount()
 + updatePaidAmountToZero()
 + validateAvailableCancel()
@@ -81,14 +93,14 @@ class CashPayment {
 }
 
 class CardPayment {
-CreditCardType creditCardType
+CreditCardType creditCardType // 신용카드 타입
 + _payInCreditCard()
 }
 
 class Inventory {
-Long shoeCode
-LocalDate stockedDate
-Long stock
+Long shoeCode // 상품 코드
+LocalDate stockedDate // 입고 일자
+Long stock // 재고 수량
 + _create()
 + restock()
 + deductStock()
@@ -106,21 +118,22 @@ class InventoryDiscountPolicy {
 }
 
 class CouponDiscountPolicy {
-Coupon coupon
+Coupon coupon // 적용된 쿠폰
 + of()
 + getDiscountType()
 + apply()
 }
 
 class Coupon {
-String couponCode
-int discountPercent
-LocalDateTime createdAt
+String couponCode // 쿠폰 코드
+int discountPercent // 할인 퍼센트
+LocalDateTime createdAt // 쿠폰 생성일자
 + _create()
 + getDiscountRate()
 }
 
 Order <-- OrderDetail
+OrderDetail <-- OrderDetailDiscount
 Payment <-- CashPayment
 Payment <-- CardPayment
 Inventory -- Shoe
