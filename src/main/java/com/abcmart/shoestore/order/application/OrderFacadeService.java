@@ -78,6 +78,7 @@ public class OrderFacadeService {
         Order storedOrder = orderService.findOrderByOrderNo(orderNo);
         Order partialCancelledOrder = orderService.partialCancel(orderNo, shoeProductCode, removeCount);
 
+        // 결제 취소할 금액 계산
         BigDecimal cancelTargetAmount = storedOrder.getAmountToCancel(partialCancelledOrder.getCurrentTotalAmount());
         List<Payment> cancelledPayments = paymentService.partialCancel(
             partialCancelledOrder.getPaymentIds(), cancelTargetAmount
