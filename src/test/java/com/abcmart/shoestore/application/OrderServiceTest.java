@@ -12,6 +12,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
 
+import com.abcmart.shoestore.config.JacksonConfig;
+import com.abcmart.shoestore.coupon.application.CouponService;
+import com.abcmart.shoestore.coupon.repository.CouponRepository;
+import com.abcmart.shoestore.discount.application.DiscountService;
+import com.abcmart.shoestore.discount.domain.policy.InventoryDiscountPolicy;
+import com.abcmart.shoestore.inventory.application.InventoryService;
 import com.abcmart.shoestore.inventory.domain.Inventory;
 import com.abcmart.shoestore.inventory.repository.InventoryRepository;
 import com.abcmart.shoestore.order.application.OrderFacadeService;
@@ -33,8 +39,12 @@ import com.abcmart.shoestore.payment.dto.PaymentDto;
 import com.abcmart.shoestore.payment.repository.PaymentRepository;
 import com.abcmart.shoestore.shoe.domain.Shoe;
 import com.abcmart.shoestore.shoe.repository.ShoeRepository;
+import com.abcmart.shoestore.utils.ShoeProductCodeUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -43,9 +53,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = {JacksonConfig.class})
 class OrderServiceTest {
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Mock
     private ShoeRepository shoeRepository;
@@ -54,12 +71,18 @@ class OrderServiceTest {
     private OrderRepository orderRepository;
 
     @Mock
+    private CouponRepository couponRepository;
+
+    @Mock
     private PaymentRepository paymentRepository;
 
     @Mock
     private InventoryRepository inventoryRepository;
 
+    private InventoryService inventoryService;
     private OrderService orderService;
+    private CouponService  couponService;
+    private DiscountService discountService;
     private PaymentService paymentService;
 
     @InjectMocks
@@ -72,6 +95,10 @@ class OrderServiceTest {
     static final Long shoeCode1 = 1L;
     static final Long shoeCode2 = 2L;
     static final Long shoeCode3 = 3L;
+
+    static final LocalDate stockedDate1 = LocalDate.of(2025, 1, 1);
+    static final LocalDate stockedDate2 = LocalDate.of(2025, 3, 2);
+    static final LocalDate stockedDate3 = LocalDate.of(2025, 6, 8);
 
     static final Shoe shoe1 = createShoeByShoeCode(shoeCode1);
     static final Shoe shoe2 = createShoeByShoeCode(shoeCode2);
@@ -87,9 +114,14 @@ class OrderServiceTest {
     @BeforeEach
     void setUp() {
 
+        inventoryService = new InventoryService(inventoryRepository);
         orderService = new OrderService(shoeRepository, orderRepository, inventoryRepository);
+        couponService = new CouponService(couponRepository);
+        discountService = new DiscountService(objectMapper, List.of(new InventoryDiscountPolicy()));
         paymentService = new PaymentService(paymentRepository);
-        orderFacadeService = new OrderFacadeService(orderService, paymentService);
+        orderFacadeService = new OrderFacadeService(
+            inventoryService, orderService, couponService, discountService, paymentService
+        );
     }
 
     @Test
@@ -105,11 +137,17 @@ class OrderServiceTest {
         given(paymentRepository.saveAll(anyList()))
             .willAnswer(invocation -> invocation.getArgument(0));
 
-        Inventory inventory1 = createInventory(shoeCode1, stockCount2);
-        Inventory inventory2 = createInventory(shoeCode2, stockCount3);
-        Inventory inventory3 = createInventory(shoeCode3, stockCount5);
+        Inventory inventory1 = createInventory(shoeCode1, stockedDate1, stockCount2);
+        Inventory inventory2 = createInventory(shoeCode2, stockedDate2, stockCount3);
+        Inventory inventory3 = createInventory(shoeCode3, stockedDate3, stockCount5);
         given(inventoryRepository.findAllByShoeCodes(anyList()))
-            .willReturn(List.of(inventory1, inventory2, inventory3));
+            .willReturn(
+                Map.of(
+                    shoeCode1, List.of(inventory1),
+                    shoeCode2, List.of(inventory2),
+                    shoeCode3, List.of(inventory3)
+                )
+            );
 
         // when
         Long countOfShoeCode1 = 2L;
@@ -124,7 +162,7 @@ class OrderServiceTest {
         BigDecimal totalPrice = shoe1.getPrice().add(shoe2.getPrice()).add(shoe3.getPrice());
         List<CreatePaymentRequest> paymentRequests = List.of(
             new CreatePaymentRequest(PaymentType.CASH, null, totalPrice));
-        CreateOrderRequest request = new CreateOrderRequest(orderDetailRequests, paymentRequests);
+        CreateOrderRequest request = new CreateOrderRequest(orderDetailRequests, null, paymentRequests);
 
         OrderDto result = orderFacadeService.createOrder(request);
 
@@ -178,11 +216,17 @@ class OrderServiceTest {
         given(paymentRepository.saveAll(anyList()))
             .willAnswer(invocation -> invocation.getArgument(0));
 
-        Inventory inventory1 = createInventory(shoeCode1, stockCount2);
-        Inventory inventory2 = createInventory(shoeCode2, stockCount3);
-        Inventory inventory3 = createInventory(shoeCode3, stockCount5);
+        Inventory inventory1 = createInventory(shoeCode1, stockedDate1, stockCount2);
+        Inventory inventory2 = createInventory(shoeCode2, stockedDate2, stockCount3);
+        Inventory inventory3 = createInventory(shoeCode3, stockedDate3, stockCount5);
         given(inventoryRepository.findAllByShoeCodes(anyList()))
-            .willReturn(List.of(inventory1, inventory2, inventory3));
+            .willReturn(
+                Map.of(
+                    shoeCode1, List.of(inventory1),
+                    shoeCode2, List.of(inventory2),
+                    shoeCode3, List.of(inventory3)
+                )
+            );
 
         // when
         Long countOfShoeCode1 = 2L;
@@ -197,7 +241,7 @@ class OrderServiceTest {
         BigDecimal totalPrice = shoe1.getPrice().add(shoe2.getPrice()).add(shoe3.getPrice());
         List<CreatePaymentRequest> paymentRequests = List.of(
             new CreatePaymentRequest(PaymentType.CREDIT_CARD, CreditCardType.HYUNDAI, totalPrice));
-        CreateOrderRequest request = new CreateOrderRequest(orderDetailRequests, paymentRequests);
+        CreateOrderRequest request = new CreateOrderRequest(orderDetailRequests, null, paymentRequests);
 
         OrderDto result = orderFacadeService.createOrder(request);
 
@@ -251,11 +295,17 @@ class OrderServiceTest {
         given(paymentRepository.saveAll(anyList()))
             .willAnswer(invocation -> invocation.getArgument(0));
 
-        Inventory inventory1 = createInventory(shoeCode1, stockCount2);
-        Inventory inventory2 = createInventory(shoeCode2, stockCount3);
-        Inventory inventory3 = createInventory(shoeCode3, stockCount5);
+        Inventory inventory1 = createInventory(shoeCode1, stockedDate1, stockCount2);
+        Inventory inventory2 = createInventory(shoeCode2, stockedDate2, stockCount3);
+        Inventory inventory3 = createInventory(shoeCode3, stockedDate3, stockCount5);
         given(inventoryRepository.findAllByShoeCodes(anyList()))
-            .willReturn(List.of(inventory1, inventory2, inventory3));
+            .willReturn(
+                Map.of(
+                    shoeCode1, List.of(inventory1),
+                    shoeCode2, List.of(inventory2),
+                    shoeCode3, List.of(inventory3)
+                )
+            );
 
         // when
         Long countOfShoeCode1 = 2L;
@@ -274,7 +324,7 @@ class OrderServiceTest {
             new CreatePaymentRequest(PaymentType.CASH, null, firstPaymentPrice),
             new CreatePaymentRequest(PaymentType.CREDIT_CARD, CreditCardType.HYUNDAI, secondPaymentPrice)
         );
-        CreateOrderRequest request = new CreateOrderRequest(orderDetailRequests, paymentRequests);
+        CreateOrderRequest request = new CreateOrderRequest(orderDetailRequests, null, paymentRequests);
 
         OrderDto result = orderFacadeService.createOrder(request);
 
@@ -320,15 +370,17 @@ class OrderServiceTest {
     void checkExceptionWhenInsufficientStock() {
 
         // given
-        List<Shoe> shoeEntities = List.of(shoe1, shoe2, shoe3);
-
-        given(shoeRepository.findAllByShoeCodes(anyList())).willReturn(shoeEntities);
-
-        Inventory inventory1 = createInventory(shoeCode1, stockCount2);
-        Inventory inventory2 = createInventory(shoeCode2, stockCount3);
-        Inventory inventory3 = createInventory(shoeCode3, stockCount4);
+        Inventory inventory1 = createInventory(shoeCode1, stockedDate1, stockCount2);
+        Inventory inventory2 = createInventory(shoeCode2, stockedDate2, stockCount3);
+        Inventory inventory3 = createInventory(shoeCode3, stockedDate3, stockCount4);
         given(inventoryRepository.findAllByShoeCodes(anyList()))
-            .willReturn(List.of(inventory1, inventory2, inventory3));
+            .willReturn(
+                Map.of(
+                    shoeCode1, List.of(inventory1),
+                    shoeCode2, List.of(inventory2),
+                    shoeCode3, List.of(inventory3)
+                )
+            );
 
         // when
         Long countOfShoeCode1 = 2L;
@@ -343,7 +395,7 @@ class OrderServiceTest {
         BigDecimal totalPrice = shoe1.getPrice().add(shoe2.getPrice()).add(shoe3.getPrice());
         List<CreatePaymentRequest> paymentRequests = List.of(
             new CreatePaymentRequest(PaymentType.CASH, null, totalPrice));
-        CreateOrderRequest request = new CreateOrderRequest(orderDetailRequests, paymentRequests);
+        CreateOrderRequest request = new CreateOrderRequest(orderDetailRequests, null, paymentRequests);
 
         // then
         assertThatThrownBy(() -> orderFacadeService.createOrder(request))
@@ -356,7 +408,7 @@ class OrderServiceTest {
     void cancelOrder() {
 
         // given
-        OrderDetail orderDetail = createOrderDetail(shoe1, 5L);
+        OrderDetail orderDetail = createOrderDetail(shoe1, stockedDate1, 5L);
         List<Payment> payments = List.of(createCash(), createCreditCard());
         Order order = createOrderBy(orderNo1, List.of(orderDetail), payments);
 
@@ -364,9 +416,10 @@ class OrderServiceTest {
         given(orderRepository.save(any(Order.class)))
             .willAnswer(invocation -> invocation.getArgument(0));
 
-        Inventory inventory1 = createInventory(shoeCode1, 5L);
+        Inventory inventory1 = createInventory(shoeCode1, stockedDate1, 5L);
 
-        given(inventoryRepository.findByShoeCode(any())).willReturn(Optional.of(inventory1));
+        given(inventoryRepository.findByShoeCodeAndStockedDate(shoeCode1, stockedDate1))
+            .willReturn(Optional.of(inventory1));
         given(inventoryRepository.save(any(Inventory.class)))
             .willAnswer(invocation -> invocation.getArgument(0));
 
@@ -382,7 +435,7 @@ class OrderServiceTest {
     void partialCancel() {
 
         // given
-        OrderDetail orderDetail = createOrderDetail(shoe1, 5L);
+        OrderDetail orderDetail = createOrderDetail(shoe1, stockedDate1, 5L);
         List<Payment> payments = List.of(createCash(), createCreditCard());
         Order order = createOrderBy(orderNo1, List.of(orderDetail), payments);
 
@@ -390,16 +443,18 @@ class OrderServiceTest {
         given(orderRepository.save(any(Order.class)))
             .willAnswer(invocation -> invocation.getArgument(0));
 
-        Inventory inventory1 = createInventory(shoeCode1, 5L);
+        Inventory inventory1 = createInventory(shoeCode1, stockedDate1, 5L);
 
-        given(inventoryRepository.findByShoeCode(any())).willReturn(Optional.of(inventory1));
+        given(inventoryRepository.findByShoeCodeAndStockedDate(shoeCode1, stockedDate1))
+            .willReturn(Optional.of(inventory1));
         given(inventoryRepository.save(any(Inventory.class)))
             .willAnswer(invocation -> invocation.getArgument(0));
 
 
         // when
         long removeCount = 1L;
-        OrderDto orderDto = orderFacadeService.partialCancel(orderNo1, shoeCode1, removeCount);
+        String shoeProductCode1 = ShoeProductCodeUtils.generate(shoeCode1, stockedDate1);
+        OrderDto orderDto = orderFacadeService.partialCancel(orderNo1, shoeProductCode1, removeCount);
 
 
         // then
@@ -416,7 +471,7 @@ class OrderServiceTest {
     void totalCancelWithPartialCancel() {
 
         // given
-        OrderDetail orderDetail = createOrderDetail(shoe1, 5L);
+        OrderDetail orderDetail = createOrderDetail(shoe1, stockedDate1, 5L);
         List<Payment> payments = List.of(createCash(), createCreditCard());
         Order order = createOrderBy(orderNo1, List.of(orderDetail), payments);
 
@@ -424,16 +479,18 @@ class OrderServiceTest {
         given(orderRepository.save(any(Order.class)))
             .willAnswer(invocation -> invocation.getArgument(0));
 
-        Inventory inventory1 = createInventory(shoeCode1, 5L);
+        Inventory inventory1 = createInventory(shoeCode1, stockedDate1, 5L);
 
-        given(inventoryRepository.findByShoeCode(any())).willReturn(Optional.of(inventory1));
+        given(inventoryRepository.findByShoeCodeAndStockedDate(shoeCode1, stockedDate1))
+            .willReturn(Optional.of(inventory1));
         given(inventoryRepository.save(any(Inventory.class)))
             .willAnswer(invocation -> invocation.getArgument(0));
 
 
         // when
         long removeCount = 5L;
-        OrderDto orderDto = orderFacadeService.partialCancel(orderNo1, shoeCode1, removeCount);
+        String shoeProductCode1 = ShoeProductCodeUtils.generate(shoeCode1, stockedDate1);
+        OrderDto orderDto = orderFacadeService.partialCancel(orderNo1, shoeProductCode1, removeCount);
 
 
         // then

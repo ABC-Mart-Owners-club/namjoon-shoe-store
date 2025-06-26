@@ -2,6 +2,8 @@ package com.abcmart.shoestore.order.dto;
 
 import com.abcmart.shoestore.order.domain.OrderDetail;
 import com.abcmart.shoestore.order.domain.OrderStatus;
+import com.abcmart.shoestore.utils.ShoeProductCodeUtils;
+import com.abcmart.shoestore.utils.ShoeProductCodeUtils.ParsedResult;
 import lombok.Getter;
 
 @Getter
@@ -22,10 +24,12 @@ public class OrderDetailDto {
 
     public static OrderDetailDto from(OrderDetail orderDetail) {
 
+        ParsedResult parsedResult = ShoeProductCodeUtils.parse(orderDetail.getShoeProductCode());
+
         return new OrderDetailDto(
             orderDetail.getOrderDetailNo(),
             orderDetail.getOrderDetailStatus(),
-            orderDetail.getShoeCode(),
+            parsedResult.shoeCode(),
             orderDetail.getCount()
         );
     }

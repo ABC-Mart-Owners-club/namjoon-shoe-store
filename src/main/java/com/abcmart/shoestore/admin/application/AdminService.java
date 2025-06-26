@@ -16,6 +16,7 @@ import com.abcmart.shoestore.shoe.domain.Shoe;
 import com.abcmart.shoestore.shoe.dto.ShoeDto;
 import com.abcmart.shoestore.shoe.repository.ShoeRepository;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -95,10 +96,11 @@ public class AdminService {
         Shoe shoe = shoeRepository.findByShoeCode(shoeCode)
             .orElseThrow(() -> new IllegalArgumentException("There are no such shoes."));
 
-        Inventory inventory = inventoryRepository.findByShoeCode(shoeCode)
-            .orElseThrow(Inventory::inventoryNotFoundException);
+        Long stock = inventoryRepository.findByShoeCode(shoeCode).stream()
+            .map(Inventory::getStock)
+            .reduce(0L, Long::sum);
 
-        return ShoeStockResponse.of(shoe, inventory);
+        return ShoeStockResponse.of(shoe, stock);
     }
 
     @Transactional
@@ -107,17 +109,31 @@ public class AdminService {
         Shoe shoe = shoeRepository.findByShoeCode(shoeCode)
             .orElseThrow(() -> new IllegalArgumentException("There are no such shoes."));
 
-        Optional<Inventory> optionalInventory = inventoryRepository.findByShoeCode(shoe.getShoeCode());
-        Inventory targetInventory;
-        if (optionalInventory.isPresent()) {
-            targetInventory = optionalInventory.get();
-            targetInventory.restock(stock);
+        List<Inventory> inventories = inventoryRepository.findByShoeCode(shoe.getShoeCode());
+        if (inventories.isEmpty()) {
+            inventories = List.of(Inventory.create(shoeCode, stock));
         } else {
-            targetInventory = Inventory.create(shoeCode, stock);
+            LocalDate nowDate = LocalDate.now();
+            List<Inventory> mutableInventories = new ArrayList<>(inventories);
+
+            Optional<Inventory> todayInventory = mutableInventories.stream()
+                .filter(inventory -> nowDate.equals(inventory.getStockedDate()))
+                .findFirst();
+
+            if (todayInventory.isPresent()) {
+                todayInventory.get().restock(stock);
+            } else {
+                mutableInventories.add(Inventory.create(shoeCode, stock));
+            }
+
+            inventories = mutableInventories;
         }
 
-        Inventory savedInventory = inventoryRepository.save(targetInventory);
+        List<Inventory> savedInventories = inventoryRepository.saveAll(inventories);
+        Long totalStock = savedInventories.stream()
+            .map(Inventory::getStock)
+            .reduce(0L, Long::sum);
 
-        return ShoeStockResponse.of(shoe, savedInventory);
+        return ShoeStockResponse.of(shoe, totalStock);
     }
 }

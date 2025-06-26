@@ -5,6 +5,9 @@ import com.abcmart.shoestore.order.domain.OrderDetail;
 import com.abcmart.shoestore.order.domain.OrderStatus;
 import com.abcmart.shoestore.payment.domain.Payment;
 import com.abcmart.shoestore.shoe.domain.Shoe;
+import com.abcmart.shoestore.utils.ShoeProductCodeUtils;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -33,13 +36,14 @@ public class OrderTestDomainFactory extends TestDomainFactory<Order> {
             .sample();
     }
 
-    public static OrderDetail createOrderDetail(Shoe shoe, Long count) {
+    public static OrderDetail createOrderDetail(Shoe shoe, LocalDate stockedDate, Long count) {
 
         return fixtureMonkey.giveMeBuilder(OrderDetail.class)
             .set("orderDetailStatus", OrderStatus.NORMAL)
-            .set("shoeCode", shoe.getShoeCode())
+            .set("shoeProductCode", ShoeProductCodeUtils.generate(shoe.getShoeCode(), stockedDate))
             .set("unitPrice", shoe.getPrice())
             .set("count", count)
+            .set("discounts", new ArrayList<>())
             .sample();
     }
 }
