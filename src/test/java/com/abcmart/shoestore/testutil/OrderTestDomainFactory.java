@@ -7,6 +7,7 @@ import com.abcmart.shoestore.payment.domain.Payment;
 import com.abcmart.shoestore.shoe.domain.Shoe;
 import com.abcmart.shoestore.utils.ShoeProductCodeUtils;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -42,6 +43,7 @@ public class OrderTestDomainFactory extends TestDomainFactory<Order> {
             .set("shoeProductCode", ShoeProductCodeUtils.generate(shoe.getShoeCode(), stockedDate))
             .set("unitPrice", shoe.getPrice())
             .set("count", count)
+            .set("discounts", new ArrayList<>())
             .sample();
     }
 }
