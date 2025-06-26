@@ -12,6 +12,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
 
+import com.abcmart.shoestore.config.JacksonConfig;
 import com.abcmart.shoestore.coupon.application.CouponService;
 import com.abcmart.shoestore.coupon.repository.CouponRepository;
 import com.abcmart.shoestore.discount.application.DiscountService;
@@ -39,6 +40,7 @@ import com.abcmart.shoestore.payment.repository.PaymentRepository;
 import com.abcmart.shoestore.shoe.domain.Shoe;
 import com.abcmart.shoestore.shoe.repository.ShoeRepository;
 import com.abcmart.shoestore.utils.ShoeProductCodeUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -51,9 +53,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = {JacksonConfig.class})
 class OrderServiceTest {
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Mock
     private ShoeRepository shoeRepository;
@@ -108,7 +117,7 @@ class OrderServiceTest {
         inventoryService = new InventoryService(inventoryRepository);
         orderService = new OrderService(shoeRepository, orderRepository, inventoryRepository);
         couponService = new CouponService(couponRepository);
-        discountService = new DiscountService(List.of(new InventoryDiscountPolicy()));
+        discountService = new DiscountService(objectMapper, List.of(new InventoryDiscountPolicy()));
         paymentService = new PaymentService(paymentRepository);
         orderFacadeService = new OrderFacadeService(
             inventoryService, orderService, couponService, discountService, paymentService
